@@ -1,264 +1,347 @@
-# MediSync — Guía de trabajo para el equipo
+# MediSync — Guía de trabajo del equipo
 
-> **Documento interno de coordinación** · Equipo de 4 personas · Plazo menor a dos semanas · Backend: 2 · Frontend: 2.
+> **Proyecto académico · 4 integrantes (2 backend, 2 frontend) · Entrega: 1 de diciembre de 2026.**
 
-## 1. Objetivo compartido
+## 1. Acuerdo principal: alcance cerrado
 
-Entregar un **MVP web funcional** que permita registrar pacientes, administrar médicos y citas, documentar consultas, adjuntar un archivo, descargar un PDF y enviar una confirmación real por correo. Debe poder ejecutarse con Docker Compose, probarse con Postman/K6 y demostrarse con datos ficticios.
+El equipo implementará **únicamente lo necesario para cumplir el proyecto y los criterios del profesor**. No se desarrollarán funciones extras aunque estén sugeridas en maquetas o documentación antigua. Toda tarea debe corresponder a: usuarios/roles ADMIN, RECEPCIONISTA y MEDICO; pacientes, médicos, citas, consultas e historial; carga/recuperación de imagen o PDF; reporte PDF; correo real; persistencia; despliegue Docker local o nube; Postman, k6, GitHub, tres diagramas, documentación y demostración.
 
-**Regla de trabajo:** primero hacer funcionar un flujo completo **React → Spring Boot → MongoDB → React**; después ampliar módulos. No comenzar funcionalidades adicionales hasta tener la integración principal estable.
+**No desarrollar:** portal de pacientes, facturación, inventario, chat, calendario avanzado, notificaciones internas, recordatorios automáticos, analítica, auditoría como módulo, reportes administrativos adicionales ni otras integraciones. Los pacientes **no inician sesión**. La confirmación por correo cumple el requisito de notificación; no se crea una bandeja interna.
 
-## 2. Punto de partida real
+## 2. Punto de partida después del merge de reorganización
 
-Repositorio: https://github.com/Lowz13/Expedientes-Medicos-TEP
+- Repositorio: https://github.com/Lowz13/Expedientes-Medicos-TEP
+- Backend: `backend/`, Java 21, Spring Boot 4.1.1 y Gradle. **`./gradlew clean compileJava` se verificó con `BUILD SUCCESSFUL`.**
+- Configuración MongoDB de desarrollo: `mongodb://localhost:27017/medisync_db`; **conexión funcional aún por verificar**.
+- Controladores y DTO de pacientes y citas: código básico en memoria, pendiente de persistencia.
+- `frontend/`, `postman/`, `k6/` y las carpetas Java de modelos/servicios/etc. están preparados pero no equivalen a funcionalidades implementadas.
+- Identidad visual: diseño A generado previamente en Google Stitch. Reglas en [`DISENO.md`](DISENO.md).
 
-En `main` se observaron `medisync/` (Spring Boot/Gradle), `PacienteController`, `CitaController`, `PacienteDto` y `CitaDto`. Las APIs actuales usan `ArrayList`, no MongoDB. El envío de correo solo se simula con `System.out.println`. No se observó frontend React, Docker, PDF ni seguridad. **No se ha ejecutado el proyecto para comprobar su compilación.**
+## 3. Distribución de trabajo — mismos cuatro frentes, tareas detalladas
 
-`medisync/build.gradle` solicita Spring Boot `4.1.1` y Java `27`. **Primera decisión técnica:** validar versiones disponibles y fijar una combinación compatible para todos; no cambiar versiones a ciegas.
+### Backend A — Datos, usuarios y seguridad
 
-## 3. Asignación de responsabilidades
+**Responsable principal de:** base de datos, usuarios/roles, pacientes y médicos.
 
-| Persona | Área | Trabajo principal | Entregable verificable |
-|---|---|---|---|
-| Backend A | Datos y seguridad | MongoDB, usuarios, roles, pacientes, médicos, validaciones | API con persistencia y permisos |
-| Backend B | Operación clínica | Citas, consultas, archivos, PDF, correo | Flujo de cita y consulta completo |
-| Frontend A | Base visual y administración | Vite/React, navegación, login, pacientes y médicos | Pantallas funcionales conectadas |
-| Frontend B | Agenda y clínica | Agenda, citas, historial, consultas, archivos y PDF | Flujo médico funcional conectado |
-
-**Responsabilidades compartidas:** decisiones de API (los 4), revisión de PR (parejas), pruebas (todos), documentación (cada persona actualiza su módulo), demo (todos conocen el flujo). Como todavía no existe diseño visual, ambos frontend acuerdan juntos un sistema de estilos mínimo antes de crear pantallas.
-
-## 4. Acuerdos técnicos antes de programar
-
-1. Definir JDK, Spring Boot y Gradle compatibles; verificar `./gradlew bootRun`.
-2. Elegir una convención de rutas: `/api/...` y nombres de recursos en plural.
-3. Acordar un único formato de error JSON, por ejemplo `{ "codigo": "CITA_OCUPADA", "mensaje": "Horario no disponible" }`.
-4. Fechas de citas: almacenar UTC, presentar hora local con zona explícita; no usar fechas como cadenas ambiguas.
-5. Identificadores: MongoDB `ObjectId` internamente, cadenas en respuestas JSON.
-6. Citas del MVP: duración fija de 30 minutos; una cita `PROGRAMADA` por médico y fecha/hora.
-7. Decidir mecanismo de autenticación (sesión/cookie o token) antes de integrar React; no mezclar dos enfoques.
-8. Decidir biblioteca de componentes/estilos (Bootstrap o CSS propio) y convenciones de nombres.
-9. Usar datos sintéticos; no subir expedientes reales.
-10. Documentar los endpoints en una colección Postman compartida.
-
-## 5. Modelo de datos de referencia
-
-| Colección | Campos principales | Relaciones |
+| Prioridad | Tarea concreta | Entregable verificable |
 |---|---|---|
-| `usuarios` | nombre, correo, passwordHash, rol, activo | 0..1 perfil médico |
-| `medicos` | usuarioId, nombre, especialidad, cedulaProfesional, horario | citas y consultas |
-| `pacientes` | nombre, fechaNacimiento, telefono, correo, alergias, antecedentes | citas, consultas, archivos |
-| `citas` | pacienteId, medicoId, fechaHora, duracionMinutos, estado, motivo | paciente y médico |
-| `consultas` | pacienteId, medicoId, citaId, fechaConsulta, diagnostico, tratamiento, observaciones | paciente, médico, cita |
-| `archivos` | pacienteId, consultaId, rutaAlmacenamiento, nombreOriginal, tipoMime, tamanoBytes, subidoPor | paciente y consulta |
+| 1 | Configurar MongoDB y conexión Spring Data; sustituir `ArrayList` de pacientes | Datos persisten tras reiniciar |
+| 2 | Modelos y repositorios de `usuarios`, `pacientes` y `medicos` | Colecciones y operaciones reales |
+| 3 | CRUD de pacientes con validaciones de datos obligatorios | Endpoints probados en Postman |
+| 4 | Gestión de médicos y asociación de su usuario de acceso | API funcional para frontend |
+| 5 | Login/logout, hash BCrypt y roles `ADMIN`, `RECEPCIONISTA`, `MEDICO` | Acceso y restricciones verificables |
+| 6 | Permisos: ADMIN gestiona cuentas/médicos; RECEPCIONISTA gestiona pacientes; MEDICO accede solo a clínica autorizada | Pruebas positivas y `401/403` |
+| 7 | Acordar DTO y respuestas con Frontend A; documentar endpoints y variables necesarias | Contrato usable sin adivinanzas |
 
-`auditoria` es recomendable si hay tiempo, especialmente para accesos y cambios clínicos. **No** guardar todo el historial como un solo campo de texto en `pacientes`.
+**No asignar a Backend A:** gráficos administrativos, auditoría independiente, portal de pacientes ni otros módulos de usuario.
 
-## 6. Matriz de permisos acordada
+### Backend B — Citas y atención clínica
 
-| Operación | ADMIN | MEDICO |
-|---|:---:|:---:|
-| Gestionar pacientes, médicos y citas | Sí | No |
-| Consultar datos generales y agenda | Sí | Sí |
-| Consultar historiales clínicos de todos los pacientes | No | Sí |
-| Registrar consultas y adjuntar archivos clínicos | No | Sí |
-| Generar/descargar reportes y documentos clínicos | No | Sí |
-| Modificar consultas de otro médico | No | No |
+**Responsable principal de:** citas, consultas, historial, archivos, PDF y correo.
 
-En el backend, comprobar rol, usuario activo y permisos sobre el recurso. React solo refleja esos permisos visualmente.
-
-## 7. Contrato inicial de API para integración
-
-**Propuesto; no equivale a implementación existente.** Los cuatro deben aprobar campos, respuestas y errores antes de crear formularios.
-
-| Método | Endpoint | Responsable | Estado de partida |
-|---|---|---|---|
-| GET | `/api/pacientes` | Backend A | Básico en memoria |
-| POST | `/api/pacientes` | Backend A | Básico en memoria |
-| GET | `/api/pacientes/{id}` | Backend A | Pendiente |
-| PUT | `/api/pacientes/{id}` | Backend A | Pendiente |
-| GET | `/api/doctores` | Backend A | Pendiente |
-| POST | `/api/doctores` | Backend A | Pendiente |
-| POST | `/api/auth/login` | Backend A | Pendiente |
-| GET | `/api/citas` | Backend B | Básico en memoria |
-| POST | `/api/citas` | Backend B | Básico en memoria |
-| PATCH | `/api/citas/{id}/cancelar` | Backend B | Pendiente |
-| GET | `/api/pacientes/{id}/historial` | Backend B | Pendiente |
-| POST | `/api/consultas` | Backend B | Pendiente |
-| GET | `/api/consultas/{id}/reporte` | Backend B | Pendiente |
-| POST | `/api/pacientes/{id}/archivos` | Backend B | Pendiente |
-| GET | `/api/archivos/{id}` | Backend B | Pendiente |
-
-### Ejemplos JSON de referencia (sujetos a acuerdo)
-
-Crear paciente:
-
-```json
-{
-  "nombre": "Paciente de Prueba",
-  "fechaNacimiento": "1995-05-12",
-  "telefono": "5550000000",
-  "correo": "paciente.ejemplo@example.com",
-  "alergias": [],
-  "antecedentes": "Sin antecedentes reportados"
-}
-```
-
-Agendar cita:
-
-```json
-{
-  "pacienteId": "<id-paciente>",
-  "medicoId": "<id-medico>",
-  "fechaHora": "2026-10-20T16:00:00Z",
-  "motivo": "Consulta general"
-}
-```
-
-Respuestas sugeridas: `201` creación, `200` consulta, `400` validación, `401` sin autenticación, `403` sin permiso, `404` no encontrado, `409` cita duplicada. El frontend debe manejar errores sin mostrar trazas internas.
-
-## 8. Pantallas mínimas y diseño sin maqueta previa
-
-| Pantalla | Contenido | Responsable |
+| Prioridad | Tarea concreta | Entregable verificable |
 |---|---|---|
-| Login | Correo, contraseña, error de autenticación | Frontend A |
-| Panel principal | Menú por rol, accesos rápidos | Frontend A |
-| Pacientes | Lista, búsqueda, alta y edición | Frontend A |
-| Médicos | Lista y alta/edición (ADMIN) | Frontend A |
-| Agenda | Lista por fecha y médico, alta/cancelación (ADMIN) | Frontend B |
-| Historial clínico | Consultas del paciente (MEDICO) | Frontend B |
-| Nueva consulta | Diagnóstico, tratamiento, observaciones | Frontend B |
-| Documentos y PDF | Adjuntar, listar y descargar | Frontend B |
+| 1 | Migrar citas de `ArrayList` a MongoDB, asociadas a paciente y médico | Crear/listar citas persistentes |
+| 2 | Validar horario del médico y rechazar cita duplicada; gestionar cancelación | Conflicto probado en Postman |
+| 3 | Listar agenda según rol: ADMIN/RECEPCIONISTA operan; MEDICO consulta la propia | API y permisos probados |
+| 4 | Modelo y registro de consulta con médico/paciente/cita | Consulta persistida |
+| 5 | Consultar historial por paciente, protegiendo datos; impedir editar consultas de otro médico | Acceso médico comprobado |
+| 6 | Subir y descargar imagen/PDF asociada a consulta o paciente, con control de acceso | Archivo recuperable |
+| 7 | Generar **un reporte de consulta en PDF** descargable | PDF válido y legible |
+| 8 | Configurar Gmail SMTP con variables de entorno y enviar confirmación real al crear cita | Mensaje recibido en correo de prueba |
+| 9 | Acordar DTO y respuestas con Frontend B; documentar endpoints y evidencias | Contrato funcional |
 
-### Reglas de diseño mínimas
+**No asignar a Backend B:** recordatorios automáticos, centro de notificaciones, receta electrónica, otros reportes o calendario complejo.
 
-- Definir tipografía, 2–3 colores, tamaños de botones, campos y mensajes antes de programar.
-- Usar componentes compartidos: `Navbar`, `Sidebar`, `Button`, `Input`, `Modal`, `Table`, `Alert`.
-- Mantener navegación consistente, estados de carga, vacíos y errores.
-- Etiquetas visibles en formularios; navegación por teclado y contraste legible.
-- La agenda puede ser una **tabla filtrable**; calendario complejo queda fuera del MVP.
-- Hacer primero un boceto de baja fidelidad, no esperar un diseño perfecto.
+### Frontend A — Estructura, acceso y administración
 
-## 9. Organización de carpetas recomendada
+**Responsable principal de:** base React, navegación, login, pacientes y médicos.
+
+| Prioridad | Tarea concreta | Entregable verificable |
+|---|---|---|
+| 1 | Inicializar React/Vite y estructura `components/`, `pages/`, `routes/`, `services/`, `styles/` | App arranca sin errores |
+| 2 | Definir componentes compartidos `Sidebar`, `Header`, botones, formularios y tablas según Stitch A | Componentes reutilizables |
+| 3 | Login y cierre de sesión, rutas protegidas y navegación según los tres roles | Flujo de acceso con API real |
+| 4 | Pantallas ADMIN para gestionar pacientes y médicos | Altas/listados/edición conectados |
+| 5 | Pantallas RECEPCIONISTA para registrar/consultar/editar datos generales de pacientes | Flujo conectado y autorizado |
+| 6 | Estados de carga, validación y error para las pantallas a su cargo | Manejo de respuestas real |
+| 7 | Verificar responsividad y coherencia del diseño A; capturas en PR | UI revisada |
+
+**No asignar a Frontend A:** dashboards con gráficos, estadísticas, módulo de notificaciones, pantallas de pacientes con login.
+
+### Frontend B — Citas, consultas y documentos
+
+**Responsable principal de:** agenda, citas, historial, consultas, archivos y reporte PDF.
+
+| Prioridad | Tarea concreta | Entregable verificable |
+|---|---|---|
+| 1 | Pantalla de citas en listado/tabla con filtros sencillos por fecha y médico | Consulta de agenda conectada |
+| 2 | Registrar y cancelar citas como ADMIN/RECEPCIONISTA; mostrar conflicto de horario | Formulario y mensajes reales |
+| 3 | Mostrar al MEDICO sus citas asignadas | Vista por rol conectada |
+| 4 | Pantalla de historial clínico del paciente para MEDICO | Historial real desde API |
+| 5 | Formulario de nueva consulta: diagnóstico, tratamiento y observaciones | Guarda consulta en MongoDB |
+| 6 | Adjuntar imagen/PDF y mostrar/descargar documentos autorizados | Flujo completo de archivos |
+| 7 | Acción de generación y descarga del reporte PDF | Descarga real, no simulada |
+| 8 | Integrar componentes comunes con Frontend A y comprobar diseño A/responsividad | UI consistente |
+
+**No asignar a Frontend B:** calendario drag-and-drop, recordatorios, mensajería o centro de notificaciones. El aviso por correo se envía desde Backend B.
+
+### Responsabilidades compartidas y dependencias
+
+| Actividad | Responsable de coordinar | Participación |
+|---|---|---|
+| Contratos API, DTO y permisos | Backend A + Backend B | Los dos frontend revisan antes de integrar |
+| Diseño y componentes compartidos | Frontend A | Frontend B valida y reutiliza |
+| Inicio de sesión y rutas protegidas | Backend A + Frontend A | Frontend B usa el mismo esquema |
+| Datos y consultas clínicas | Backend B + Frontend B | Backend A apoya autorización |
+| Postman | Ambos backend | Frontend verifica errores y payloads |
+| k6 | Backend B | Backend A apoya endpoints/datos de prueba |
+| Docker Compose o alternativa nube | Ambos backend | Frontend aporta pasos de build/ejecución |
+| README, guía, diseño y tres diagramas | Todos | Cada persona documenta lo que modifica |
+| Validación final y demo | Los cuatro | Cada uno conoce el flujo completo |
+
+**Regla de integración:** no dar por concluida una pantalla con datos estáticos ni una API sin persistencia. Confirmar que React → API → MongoDB → React funciona para el flujo correspondiente.
+
+## 4. Matriz mínima de roles
+
+| Acción | ADMIN | RECEPCIONISTA | MEDICO |
+|---|:---:|:---:|:---:|
+| Gestionar cuentas y médicos | Sí | No | No |
+| Datos generales de pacientes: alta/edición/consulta | Sí | Sí | Consulta necesaria |
+| Crear/cancelar citas | Sí | Sí | No |
+| Ver agenda | Sí | Sí | Propia |
+| Consultar historial clínico | No | No | Sí |
+| Registrar consultas | No | No | Propias |
+| Adjuntar/descargar archivos clínicos | No | No | Sí, autorizado |
+| Generar reporte clínico PDF | No | No | Sí |
+| Modificar consultas ajenas | No | No | No |
+
+Los permisos se implementan obligatoriamente en Spring Security/backend. El frontend solo adapta las opciones visibles.
+
+## 5. Estructura del repositorio y acuerdos de código
 
 ```text
 Expedientes-Medicos-TEP/
-├── medisync/                   # Spring Boot ya existe
-│   └── src/main/java/.../
-│       ├── expedientes/controllers/
-│       ├── expedientes/dtos/
-│       ├── expedientes/models/
-│       ├── expedientes/repositories/
-│       ├── expedientes/services/
-│       └── security/
-├── frontend/                   # React + Vite por crear
+├── backend/
+│   ├── src/main/java/mx/unam/aragon/tsp/medisync/
+│   │   ├── config/
+│   │   ├── security/
+│   │   ├── controllers/
+│   │   ├── dtos/
+│   │   ├── models/
+│   │   ├── repositories/
+│   │   └── services/
+│   └── build.gradle
+├── frontend/
 │   └── src/
 │       ├── components/
-│       ├── pages/
+│       ├── pages/admin/
+│       ├── pages/recepcion/
+│       ├── pages/medico/
+│       ├── routes/
 │       ├── services/
 │       └── styles/
+├── docs/
+│   ├── GUIA_EQUIPO.md
+│   ├── DISENO.md
+│   └── diseño/
 ├── postman/
 ├── k6/
-├── docs/
-├── docker-compose.yml
+├── docker-compose.yml     # pendiente
+├── .env.example           # pendiente
 └── README.md
 ```
 
-## 10. Flujo GitHub para trabajar sin pisarse
+Las carpetas de frontend, los Dockerfile/Compose y `.env.example` se crearán cuando se implemente la parte correspondiente, **no con archivos ficticios para aparentar avance**.
 
-Trabajar con `main` protegida por revisión y ramas por funcionalidad:
+Usar rutas `/api/...`, fechas inequívocas, DTO acordados y errores HTTP coherentes: `400`, `401`, `403`, `404`, `409`. Nunca exponer trazas o datos clínicos al cliente. Datos siempre ficticios y secretos solo en variables de entorno.
 
-- `feat/backend-pacientes-mongo`
-- `feat/backend-citas-consultas`
-- `feat/frontend-base-pacientes`
-- `feat/frontend-agenda-historial`
+## 6. Convención obligatoria para nombrar ramas
 
-Comandos de ejemplo:
+**Formato:** `<tipo>/<area>-<descripcion-corta>`.
 
-```bash
-git clone https://github.com/Lowz13/Expedientes-Medicos-TEP.git
-cd Expedientes-Medicos-TEP
-git switch main
-git pull origin main
-git switch -c feat/frontend-base-pacientes
-# realizar cambios
-git status
-git diff --check
-git add .
-git commit -m "feat(frontend): agregar listado de pacientes"
-git push -u origin feat/frontend-base-pacientes
+- Tipos: `feat` (funcionalidad requerida), `fix` (corrección), `docs` (documentación), `refactor` (reorganización sin alterar comportamiento), `test` (pruebas), `chore` (mantenimiento) o `build` (compilación/despliegue).
+- Áreas: `backend`, `frontend`, `docs` o `infra` cuando ayude a identificarlas.
+- Usar **minúsculas, sin espacios, sin acentos ni ñ**, palabras separadas por guiones `-`.
+- Una rama por tarea concreta. Evitar nombres como `cambios`, `rama-final` o `todo`.
+
+**Ejemplos válidos:**
+
+```text
+feat/backend-pacientes-mongodb
+feat/backend-login-roles
+feat/backend-citas-correo
+feat/frontend-login
+feat/frontend-agenda-citas
+feat/frontend-historial-clinico
+docs/actualizar-documentacion
+fix/backend-validacion-horarios
+test/backend-postman-citas
+build/infra-docker-compose
 ```
 
-Abrir Pull Request a `main`, describir cambios, pruebas ejecutadas y capturas si hay interfaz. Solicitar revisión de otra persona; integrar ramas pequeñas con frecuencia. **No** usar `git add .` sin revisar `git status` para evitar subir `.env`, archivos clínicos, bases de datos o credenciales.
+## 7. Conventional Commits — mensajes en español
 
-## 11. Plan de 12 días (ajustable)
+**Formato:** `<tipo>(<alcance>): <descripcion en español>`.
 
-| Días | Backend A | Backend B | Frontend A | Frontend B |
+- El **tipo** conserva el identificador estándar en inglés (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `style`, `perf`, `ci`).
+- El **alcance** es opcional y preferentemente `backend`, `frontend`, `docs`, `infra`, `pacientes`, `citas`, etc.
+- La **descripción va en español**, en minúscula al inicio, con verbo en infinitivo, sin punto final; debe describir lo realizado y no prometer lo pendiente.
+- **No** agregar `feat` por tareas extra: `feat` solo representa funcionalidades dentro del alcance obligatorio.
+- Para cambios incompatibles, comunicarlo explícitamente en el PR y usar `!` cuando corresponda (por ejemplo `refactor(api)!: cambiar estructura de respuesta`).
+
+| Tipo | Cuándo usarlo | Ejemplo de commit |
+|---|---|---|
+| `feat` | Implementar un requisito | `feat(backend): guardar pacientes en mongodb` |
+| `fix` | Corregir un defecto | `fix(citas): impedir horarios duplicados` |
+| `docs` | Editar documentación | `docs: actualizar guia de equipo y diseno` |
+| `refactor` | Cambiar estructura sin nuevas funciones | `refactor(frontend): reutilizar componente de tabla` |
+| `test` | Crear/ajustar pruebas | `test(backend): agregar casos postman de permisos` |
+| `chore` | Mantenimiento | `chore: limpiar archivos temporales` |
+| `build` | Dependencias o build | `build(backend): configurar dependencia de correo` |
+| `style` | Formato, sin cambio funcional | `style(frontend): ajustar espaciado de formularios` |
+
+**Ejemplo:**
+
+```bash
+git add backend/src/main/java
+ git commit -m "feat(backend): registrar pacientes en mongodb"
+```
+
+Antes de ejecutar `git add`, revisar siempre `git status` para no incluir secretos ni archivos generados.
+
+## 8. Flujo completo Git y Pull Request hasta `main`
+
+### 8.1 Actualizar `main` local y crear una rama nueva
+
+```bash
+git switch main
+git pull --ff-only origin main
+git switch -c docs/actualizar-documentacion
+```
+
+**Nunca desarrollar directamente en `main`.** Si otra persona está trabajando en el mismo archivo, coordinar antes de editar.
+
+### 8.2 Trabajar y verificar
+
+```bash
+git status
+git diff --check
+# Ejecutar las pruebas pertinentes a la tarea
+# backend: cd backend && ./gradlew clean compileJava
+# frontend: ejecutar comandos de build/test cuando exista package.json
+```
+
+Revisar qué archivos cambiaron y que no haya `.env`, credenciales SMTP, información real de pacientes, builds ni `node_modules`.
+
+### 8.3 Registrar commits pequeños y claros
+
+```bash
+git add README.md docs/GUIA_EQUIPO.md docs/DISENO.md
+git commit -m "docs: actualizar documentacion y reglas del equipo"
+git status
+```
+
+Cambiar las rutas de `git add` según la tarea. Se prefieren commits autocontenidos y revisables.
+
+### 8.4 Publicar la rama
+
+```bash
+git push -u origin docs/actualizar-documentacion
+```
+
+Si se agregan correcciones al mismo PR, crear otro commit y ejecutar `git push` de nuevo.
+
+### 8.5 Abrir Pull Request
+
+En GitHub: **Pull requests → New pull request**, o el enlace que aparece después del push. Verificar **base: `main`** y **compare: la rama de trabajo**.
+
+El PR debe incluir:
+
+- Título claro, preferentemente con Conventional Commits en español.
+- Objetivo y requisito académico que cubre.
+- Archivos y comportamiento modificados; sin funcionalidades extra.
+- Pruebas **realmente ejecutadas** y resultados; si algo no se probó, indicarlo.
+- Capturas si cambia la interfaz, comparadas con [`DISENO.md`](DISENO.md).
+- Dependencias o puntos pendientes y, cuando corresponda, vínculo al issue.
+
+**Plantilla breve de PR:**
+
+```markdown
+## Objetivo
+Explicar qué requisito del proyecto resuelve.
+
+## Cambios
+- ...
+
+## Verificación
+- Comando ejecutado y resultado: ...
+- Capturas (si aplica): ...
+
+## Fuera de alcance
+No se agregaron funcionalidades extra.
+```
+
+### 8.6 Revisión, correcciones y merge
+
+1. Solicitar revisión **al menos a un compañero que no haya escrito el cambio**.
+2. Resolver comentarios y conflictos en la **misma rama**; volver a ejecutar las pruebas afectadas.
+3. Confirmar que el PR no incluye secretos, cambios ajenos ni funcionalidades extras.
+4. Comprobar los checks de GitHub si están configurados; no afirmar que existen si no los hay.
+5. Tras aprobación del equipo, quien tenga permiso integra el PR a `main` con el método acordado, preferentemente **Squash and merge** para una tarea pequeña.
+6. Confirmar que el PR aparece como **Merged** y que los archivos están en `main`.
+7. Eliminar la rama remota desde GitHub si ya no se utilizará.
+
+### 8.7 Actualizar repositorio local después del merge
+
+```bash
+git switch main
+git pull --ff-only origin main
+git branch -d docs/actualizar-documentacion
+```
+
+Si la rama se integró por squash y Git no reconoce sus commits como ancestros, `git branch -d` podría negarse. **Primero comprobar el merge y que no existan cambios pendientes**; solo entonces considerar `git branch -D nombre-rama`. No forzar borrados sin verificar.
+
+**Nunca hacer `git push --force` a `main` ni resolver conflictos descartando trabajo de otros.**
+
+## 9. Orden de integración y calendario de trabajo
+
+La entrega es el **1 de diciembre de 2026**. La siguiente secuencia organiza dependencias, no garantiza que una tarea ya esté completada.
+
+| Etapa | Backend A | Backend B | Frontend A | Frontend B |
 |---|---|---|---|---|
-| 1–2 | Validar build, Mongo, contrato API | Definir cita/consulta, contrato API | Crear Vite, estructura y login visual | Bocetos, componentes y agenda visual |
-| 3–5 | Pacientes, médicos, auth | Citas, conflictos y persistencia | Login y CRUD pacientes/médicos | Agenda conectada y manejo de errores |
-| 6–8 | Permisos, validaciones, soporte | Consultas, PDF, archivos, correo | Pulir navegación y roles | Historial, consultas y descargas |
-| 9–10 | Postman, revisión de seguridad | K6, Docker e integración | Pruebas UI y correcciones | Pruebas UI, README y diagramas |
-| 11–12 | Ensayo y correcciones | Ensayo y correcciones | Presentación y demo | Presentación y demo |
+| 1. Acuerdos y base | MongoDB y contrato usuarios/pacientes/médicos | Contrato citas/consultas/archivos | Vite, diseño base, rutas/login | Componentes compartidos y vistas de agenda |
+| 2. Flujo administrativo | Persistencia, login y roles | Persistencia de citas, conflictos | Pacientes, médicos y vista recepcionista | Registrar/listar/cancelar citas |
+| 3. Flujo clínico | Restricciones y apoyo a permisos | Historial, consultas, archivos, PDF, correo | Integración, validaciones y pulido | Historial, consulta y descarga PDF/archivos |
+| 4. Verificación final | Postman de auth y CRUD | Postman citas/clínica, k6, despliegue | Responsividad y errores | Pruebas UI y documentación de flujos |
+| 5. Entrega | Correcciones y demostración | Correcciones y demostración | Capturas y demostración | Capturas y demostración |
 
-**Punto de control del día 5:** registrar un paciente desde React, guardarlo en MongoDB, recargar y comprobar que sigue existiendo. Si no funciona, congelar extras.
+**Prioridad de integración:** primero demostrar que un paciente se registra desde React, permanece en MongoDB y aparece al recargar; luego conectar citas y finalmente el flujo clínico y entregables técnicos. No abrir trabajo opcional para “aprovechar tiempo”.
 
-## 12. Checklist de aceptación del MVP
+## 10. Criterios para dar una tarea por terminada
 
-- [ ] Compila y arranca backend.
-- [ ] Frontend muestra la aplicación y consume API real.
-- [ ] Login y permisos ADMIN/MEDICO comprobados.
-- [ ] CRUD básico de pacientes y médicos persistente.
-- [ ] Crear cita y rechazar horario ocupado.
-- [ ] Registrar consulta y consultar historial.
-- [ ] Adjuntar y descargar archivo con autorización.
-- [ ] Generar PDF válido.
-- [ ] Enviar correo real (no solo `println`).
-- [ ] Docker Compose ejecuta servicios y conserva datos tras reinicio.
-- [ ] Postman: casos positivos, negativos y de permisos.
-- [ ] K6: prueba ejecutada, métricas guardadas y entorno documentado.
-- [ ] README actualizado con 3 diagramas y arranque comprobado.
-- [ ] Demo ensayada y presentación preparada.
+- [ ] Resuelve una tarea del alcance acordado, sin extras.
+- [ ] Se probó localmente el flujo correspondiente.
+- [ ] Si guarda datos, conserva información tras reinicio.
+- [ ] Si usa roles, su autorización está en backend.
+- [ ] Si cambia interfaz, cumple `DISENO.md` y responde en móvil.
+- [ ] Si agrega API, su colección Postman está actualizada.
+- [ ] Los secretos y datos personales reales no están en Git.
+- [ ] La documentación técnica afectada está actualizada.
+- [ ] PR revisado y fusionado a `main`.
 
-## 13. Guía rápida de pruebas
+**Aceptación de entrega:** login con tres roles; administración de pacientes/médicos/citas según permisos; médico consulta historial y registra consulta; carga/descarga de archivo; reporte PDF; correo recibido; persistencia; ejecución demostrable; pruebas Postman/k6 y tres diagramas actualizados. No exigir características ajenas al proyecto.
 
-**Postman:** probar login válido e inválido; crear/listar paciente; campos vacíos; cita ocupada; consultar historial con rol médico; intento de acceso sin permiso; subida de PDF permitido y archivo no permitido; respuesta PDF con tipo MIME correcto.
+## 11. Comunicación y bloqueos
 
-**K6:** comenzar con lecturas (`GET /api/pacientes`, `GET /api/citas`) usando credenciales de prueba y una base con datos sintéticos. Registrar latencia p95, tasa de errores y número de usuarios virtuales. No ejecutar carga contra correos reales ni contra un servidor compartido sin permiso.
+En cada reunión breve, cada integrante informa: tarea terminada, siguiente tarea y bloqueo concreto. Cuando backend y frontend compartan un flujo, acordar antes el JSON, la ruta, el estado HTTP y los permisos. Si una funcionalidad del diseño no corresponde a los requisitos, **no se implementa** y se documenta la exclusión. Los cambios de alcance solo pueden hacerse por acuerdo del equipo ante un requisito explícito del profesor.
 
-## 14. Riesgos y soluciones
+## 12. Documentos que deben mantenerse al día
 
-| Riesgo | Acción |
-|---|---|
-| Java 27 o Spring Boot incompatibles con el equipo | Verificar herramientas y acordar versiones el día 1 |
-| React y API no coinciden | Contrato JSON y ejemplos compartidos desde el día 1 |
-| Datos desaparecen | Sustituir `ArrayList` por MongoDB y configurar volumen persistente |
-| Correo falla en demo | Probar SMTP antes del día 8 y documentar errores |
-| Citas duplicadas | Validación backend + índice único parcial para citas programadas |
-| Fuga de datos | Datos ficticios, roles backend y archivos privados |
-| Falta de tiempo | No añadir funcionalidades fuera del MVP; reservar 2 días para ensayo |
+- `README.md`: estado real, ejecución comprobada, endpoints, tecnologías, tres diagramas y requisitos.
+- `docs/GUIA_EQUIPO.md`: reparto de tareas, Git/PR, acuerdos y dependencias.
+- `docs/DISENO.md`: colores, componentes, pantallas y criterios visuales Stitch A.
+- `postman/` y `k6/`: pruebas ejecutables, sin secretos.
+- `docs/diseño/`: capturas o exportaciones del diseño A cuando se incorporen.
 
-## 15. Reunión diaria de 10 minutos
-
-Cada persona responde: **qué terminé ayer, qué haré hoy y qué bloqueo tengo**. Actualizar tablero de tareas con columnas `Pendiente`, `En progreso`, `En revisión`, `Terminado`. Cada PR debe poder probarse y contener un alcance pequeño.
-
-## 16. Guion mínimo de demo
-
-1. Mostrar inicio de sesión de ADMIN.
-2. Crear médico y paciente.
-3. Agendar cita; enseñar correo recibido.
-4. Intentar agendar mismo horario y mostrar rechazo.
-5. Iniciar sesión como MEDICO.
-6. Consultar historial y registrar consulta.
-7. Adjuntar documento y descargar reporte PDF.
-8. Mostrar persistencia y evidencias de Postman/K6.
-
-Preparar datos sintéticos de respaldo, una copia local dockerizada y capturas de resultados de pruebas. No exponer contraseñas ni información médica real en la pantalla compartida.
-
-## 17. Qué actualizar cada vez que cambie el código
-
-- `README.md`: estado real, instalación, variables, puertos, diagramas y endpoints implementados.
-- `GUIA_EQUIPO.md`: responsables, acuerdos, bloqueos y tareas.
-- `postman/`: colección alineada con API real.
-- `k6/`: scripts y resultados reproducibles.
-
-**Definición de terminado:** código integrado en `main`, validado con prueba pertinente, sin secretos, con documentación actualizada y verificable durante la demo.
+No marcar como implementada ninguna parte que todavía sea una propuesta o una carpeta vacía.
