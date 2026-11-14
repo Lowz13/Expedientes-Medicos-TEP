@@ -1,0 +1,30 @@
+:root {
+   /*Colores de Google Stich - Diseño A*/
+  --color-primary: #176b87;
+  --color-primary-hover: #13566d;
+  --color-secondary: #149c91;
+
+  --color-background: #f5f8fb;
+  --color-surface: #ffffff;
+
+  --color-text: #203047;
+  --color-muted: #64748b;
+  --color-border: #e2e8f0;
+
+  /* Estados */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #0284c7;
+
+  /* Tipografía */
+  --font-app: "Inter", Arial, sans-serif;
+
+  /* Bordes */
+  --radius-card: 12px;
+  --radius-control: 8px;
+
+  /* Layout */
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}

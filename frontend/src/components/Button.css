@@ -1,0 +1,45 @@
+.medisync-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-family: var(--font-app);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.medisync-button--primary {
+  color: #ffffff;
+  background-color: var(--color-primary);
+}
+
+.medisync-button--primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.medisync-button--secondary {
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.medisync-button--secondary:hover:not(:disabled) {
+  background-color: var(--color-background);
+}
+
+.medisync-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.medisync-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

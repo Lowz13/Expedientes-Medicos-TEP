@@ -1,0 +1,27 @@
+.medisync-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-background);
+}
+
+.medisync-layout__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.medisync-layout__main {
+  flex: 1;
+  padding: 24px;
+}
+
+@media (max-width: 768px) {
+  .medisync-layout {
+    flex-direction: column;
+  }
+
+  .medisync-layout__main {
+    padding: 16px;
+  }
+}
