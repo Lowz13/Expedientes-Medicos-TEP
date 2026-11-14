@@ -1,32 +1,94 @@
+// ============================================================================
+// BLOQUE DE PLUGINS
+// Aquí se declaran los plugins de Gradle que se aplican al proyecto.
+// ============================================================================
 plugins {
+	// Plugin base de Java: agrega tareas como compileJava, test, jar, etc.
 	id 'java'
+
+	// Plugin de Spring Boot: permite empaquetar la app como jar ejecutable,
+	// agrega la tarea bootRun y gestiona la versión de Spring Boot (4.1.1).
 	id 'org.springframework.boot' version '4.1.1'
+
+	// Plugin de gestión de dependencias de Spring: permite omitir las versiones
+	// en las dependencias de Spring (BOM), ya que las administra automáticamente.
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
+// ============================================================================
+// COORDENADAS DEL PROYECTO
+// group = paquete/organización, version = versión del artefacto.
+// ============================================================================
 group = 'mx.unam.aragon.tsp'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1-SNAPSHOT' // SNAPSHOT indica que es una versión en desarrollo
 
+// ============================================================================
+// CONFIGURACIÓN DE JAVA
+// Se usa un "toolchain" para fijar la versión de Java con la que se compila
+// y ejecuta el proyecto, independientemente de la versión instalada en el equipo.
+// ============================================================================
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(21) // Java 21 (LTS)
 	}
 }
 
+// ============================================================================
+// REPOSITORIOS
+// De dónde Gradle descarga las dependencias. Maven Central es el repositorio
+// público estándar donde se publican la mayoría de librerías Java.
+// ============================================================================
 repositories {
 	mavenCentral()
 }
 
+// ============================================================================
+// DEPENDENCIAS
+// Aquí se declaran las librerías que necesita el proyecto.
+//   - implementation       -> necesaria en compilación y en ejecución
+//   - developmentOnly      -> solo en desarrollo, NO se incluye en el jar final
+//   - testImplementation   -> solo para compilar y ejecutar pruebas
+//   - testRuntimeOnly      -> solo necesaria en tiempo de ejecución de pruebas
+// ============================================================================
 dependencies {
+	// --- Dependencias principales de la aplicación ---
+
+	// Spring Data MongoDB: acceso a base de datos MongoDB (repositorios, plantillas).
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+	// Thymeleaf: motor de plantillas HTML para renderizar vistas en el servidor.
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+	// Spring Web MVC: para crear controladores REST y aplicaciones web (servlets, @Controller, etc.).
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+	// OpenPDF: librería para generar documentos PDF (reportes).
+	// Es un fork de iText mantenido por la comunidad, con licencia LGPL/MPL.
+	implementation 'com.github.librepdf:openpdf:1.3.30'
+
+	// --- Dependencias solo para desarrollo ---
+
+	// DevTools: recarga automática de la app al cambiar código, reinicio rápido, etc.
+	// No se empaqueta en el jar de producción.
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// --- Dependencias para pruebas ---
+
+	// Utilidades de test para Thymeleaf (renderizado de vistas en pruebas).
 	testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
+
+	// Utilidades de test para Spring Web MVC (MockMvc, etc.).
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+	// Lanzador de JUnit Platform, necesario para ejecutar las pruebas con JUnit 5.
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// ============================================================================
+// CONFIGURACIÓN DE LA TAREA TEST
+// Se indica que las pruebas se ejecutarán con la plataforma JUnit (JUnit 5).
+// Sin esto, Gradle no detectaría las pruebas de JUnit 5 correctamente.
+// ============================================================================
 tasks.named('test') {
 	useJUnitPlatform()
 }
