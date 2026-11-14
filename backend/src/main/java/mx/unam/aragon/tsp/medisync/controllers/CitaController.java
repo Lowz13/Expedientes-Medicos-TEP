@@ -39,4 +39,15 @@ public class CitaController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    // PATCH: Cancelar una cita por ID (NUEVO MÉTODO)
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<Cita> cancelarCita(@PathVariable String id) {
+        try {
+            Cita citaCancelada = citaService.cancelarCita(id);
+            return ResponseEntity.ok(citaCancelada);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
 }

@@ -4,17 +4,20 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
-@Document(collection = "citas") // Define el nombre de la colección en MongoDB
+@Document(collection = "citas")
 public class Cita {
 
     @Id
-    private String id; // Identificador único de la cita generado por MongoDB
+    private String id;
     
-    private String pacienteId; // ID del paciente (referencia al módulo de Backend A)
-    private String medicoId;   // ID del médico (referencia al módulo correspondiente)
-    private LocalDateTime fechaHora; // Fecha y hora programada para la cita
+    private String pacienteId; 
+    private String medicoId;   
+    private LocalDateTime fechaHora; 
+    
+    // Variable agregada aquí arriba, con las demás
+    private String estado = "ACTIVA"; 
 
-    // Constructores vacíos y con parámetros
+    // Constructores
     public Cita() {}
 
     public Cita(String pacienteId, String medicoId, LocalDateTime fechaHora) {
@@ -23,7 +26,7 @@ public class Cita {
         this.fechaHora = fechaHora;
     }
 
-    // Getters y Setters (necesarios para que Spring Boot convierta los datos a JSON)
+    // Getters y Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -35,4 +38,9 @@ public class Cita {
 
     public LocalDateTime getFechaHora() { return fechaHora; }
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
+
+    // Getters y Setters del estado aquí abajo
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+    
 }
