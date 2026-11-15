@@ -15,13 +15,28 @@ public class Medico {
     private String usuarioId;
 
     private String nombre;
+    private String apellidoPaterno;
+    private String apellidoMaterno;
+    private String telefono;
     private String especialidad;
     private String cedulaProfesional;
     private List<String> horarios; // Franjas u horarios disponibles
     private boolean activo = true;
 
-    public Medico() {}
 
+    
+
+    public Medico(String usuarioId, String nombre, String apellidoPaterno, String apellidoMaterno, String telefono,
+            String especialidad, String cedulaProfesional, boolean activo) {
+        this.usuarioId = usuarioId;
+        this.nombre = nombre;
+        this.apellidoPaterno = apellidoPaterno;
+        this.apellidoMaterno = apellidoMaterno;
+        this.telefono = telefono;
+        this.especialidad = especialidad;
+        this.cedulaProfesional = cedulaProfesional;
+        this.activo = activo;
+    }
     // Getters y Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -31,6 +46,15 @@ public class Medico {
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
+
+    public String getApellidoPaterno() {return apellidoPaterno;}
+    public void setApellidoPaterno(String apellidoPaterno) {this.apellidoPaterno = apellidoPaterno;}
+
+    public String getApellidoMaterno() {return apellidoMaterno;}
+    public void setApellidoMaterno(String apellidoMaterno) {this.apellidoMaterno = apellidoMaterno;}
+
+    public String getTelefono() {return telefono;}
+    public void setTelefono(String telefono) {this.telefono = telefono;}
 
     public String getEspecialidad() { return especialidad; }
     public void setEspecialidad(String especialidad) { this.especialidad = especialidad; }
@@ -43,4 +67,6 @@ public class Medico {
 
     public boolean isActivo() { return activo; }
     public void setActivo(boolean activo) { this.activo = activo; }
+  
+
 }

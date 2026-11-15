@@ -12,6 +12,7 @@ public class Consulta {
     
     private String pacienteId;   // ID del paciente al que pertenece la consulta
     private String medicoId;     // ID del médico que realizó la consulta
+    private String citaId;       // ID de la cita asociada a esta consulta (si aplica)
     private LocalDateTime fechaConsulta; // Fecha y hora en que se llevó a cabo
     private String diagnostico;  // Diagnóstico médico
     private String tratamiento;  // Tratamiento o receta indicada
@@ -20,9 +21,10 @@ public class Consulta {
     // Constructores vacíos y con parámetros
     public Consulta() {}
 
-    public Consulta(String pacienteId, String medicoId, LocalDateTime fechaConsulta, String diagnostico, String tratamiento, String notasMedicas) {
+    public Consulta(String pacienteId, String medicoId, String citaId, LocalDateTime fechaConsulta, String diagnostico, String tratamiento, String notasMedicas) {
         this.pacienteId = pacienteId;
         this.medicoId = medicoId;
+        this.citaId = citaId;
         this.fechaConsulta = fechaConsulta;
         this.diagnostico = diagnostico;
         this.tratamiento = tratamiento;
@@ -39,6 +41,9 @@ public class Consulta {
     public String getMedicoId() { return medicoId; }
     public void setMedicoId(String medicoId) { this.medicoId = medicoId; }
 
+    public String getCitaId() {return citaId;}
+    public void setCitaId(String citaId) {this.citaId = citaId;}
+    
     public LocalDateTime getFechaConsulta() { return fechaConsulta; }
     public void setFechaConsulta(LocalDateTime fechaConsulta) { this.fechaConsulta = fechaConsulta; }
 
@@ -50,4 +55,6 @@ public class Consulta {
 
     public String getNotasMedicas() { return notasMedicas; }
     public void setNotasMedicas(String notasMedicas) { this.notasMedicas = notasMedicas; }
+
+   
 }
