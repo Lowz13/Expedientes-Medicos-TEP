@@ -69,6 +69,9 @@ dependencies {
 	// Es un fork de iText mantenido por la comunidad, con licencia LGPL/MPL.
 	implementation 'com.github.librepdf:openpdf:1.3.30'
 
+	//Spring security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
 	// --- Dependencias solo para desarrollo ---
 
 	// DevTools: recarga automática de la app al cambiar código, reinicio rápido, etc.

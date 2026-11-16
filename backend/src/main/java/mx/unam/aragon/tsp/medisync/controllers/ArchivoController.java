@@ -6,9 +6,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import jakarta.servlet.http.HttpServletRequest; // <-- AQUÍ SE AGREGÓ EL "IMPORT"
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/archivos")
@@ -17,15 +18,19 @@ public class ArchivoController {
     @Autowired
     private ArchivoService archivoService;
 
-    // Endpoint POST para subir una imagen o PDF
+    // POST: Subir archivos clínicos
+    // Permitido para ADMIN, MEDICO y RECEPCIONISTA
     @PostMapping("/subir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'RECEPCIONISTA')")
     public ResponseEntity<String> subirArchivo(@RequestParam("file") MultipartFile file) {
         String fileName = archivoService.guardarArchivo(file);
         return ResponseEntity.ok("Archivo subido exitosamente con el nombre: " + fileName);
     }
 
-    // Endpoint GET para descargar o visualizar el archivo
+    // GET: Descargar o visualizar recursos clínicos sensibles
+    // Permitido únicamente para ADMIN y MEDICO
     @GetMapping("/descargar/{fileName:.+}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEDICO')")
     public ResponseEntity<Resource> descargarArchivo(@PathVariable String fileName, HttpServletRequest request) {
         // Cargar el archivo como recurso
         Resource resource = archivoService.cargarArchivoComoRecursos(fileName);
