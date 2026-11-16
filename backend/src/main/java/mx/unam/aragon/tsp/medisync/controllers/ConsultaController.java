@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
@@ -26,21 +27,27 @@ public class ConsultaController {
     }
 
     // POST: Registrar una nueva consulta clínica
+    // Únicamente el MEDICO puede registrar consultas clínicas
     @PostMapping
+    @PreAuthorize("hasRole('MEDICO')")
     public ResponseEntity<Consulta> crearConsulta(@RequestBody Consulta consulta) {
         Consulta nuevaConsulta = consultaService.crearConsulta(consulta);
         return new ResponseEntity<>(nuevaConsulta, HttpStatus.CREATED);
     }
 
     // GET: Consultar el historial clínico de un paciente específico por su ID
+    // Únicamente el MEDICO puede consultar el historial clínico
     @GetMapping("/paciente/{pacienteId}")
+    @PreAuthorize("hasRole('MEDICO')")
     public ResponseEntity<List<Consulta>> obtenerHistorialPorPaciente(@PathVariable String pacienteId) {
         List<Consulta> historial = consultaService.obtenerHistorialPorPaciente(pacienteId);
         return ResponseEntity.ok(historial);
     }
 
     // GET: Consultar una consulta individual por su ID único
+    // Únicamente el MEDICO puede consultar la consulta
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MEDICO')")
     public ResponseEntity<Consulta> obtenerConsultaPorId(@PathVariable String id) {
         return consultaService.obtenerConsultaPorId(id)
                 .map(ResponseEntity::ok)
@@ -48,7 +55,9 @@ public class ConsultaController {
     }
 
     // GET: Descargar el reporte PDF de una consulta específica
+    // Únicamente el MEDICO puede descargar el reporte PDF
     @GetMapping("/{id}/pdf")
+    @PreAuthorize("hasRole('MEDICO')")
     public ResponseEntity<org.springframework.core.io.InputStreamResource> descargarReportePdf(@PathVariable String id) {
         // Se busca la consulta; si no existe, se lanza una excepción
         Consulta consulta = consultaService.obtenerConsultaPorId(id)
