@@ -11,29 +11,36 @@ import java.util.Optional;
 public class CitaService {
 
     private final CitaRepository citaRepository;
+    private final CorreoService correoService;
 
     // Inyección de dependencias por constructor
-    public CitaService(CitaRepository citaRepository) {
+    public CitaService(CitaRepository citaRepository, CorreoService correoService) {
         this.citaRepository = citaRepository;
+        this.correoService = correoService;
     }
 
-    // Registrar una nueva cita (VERSIÓN OPTIMIZADA)
+    // Registrar una nueva cita y enviar correo de confirmación
     public Cita crearCita(Cita cita) {
-        // 1. Buscamos directamente en MongoDB si hay conflicto, sin traer toda la colección
-        List<Cita> citasExistentes = citaRepository.findByMedicoIdAndFechaHoraAndEstado(
-                cita.getMedicoId(), 
-                cita.getFechaHora(), 
-                "ACTIVA"
-        );
+        Cita nuevaCita = citaRepository.save(cita);
         
-        // 2. Si la lista NO está vacía, significa que ya hay una cita en ese horario
-        if (!citasExistentes.isEmpty()) {
-            throw new RuntimeException("El médico ya tiene una cita agendada en ese horario.");
+        try {
+            String cuerpoMensaje = "Hola, tu cita médica ha sido registrada exitosamente.\n\n" +
+                                   "Detalles de la cita:\n" +
+                                   "- ID de Cita: " + nuevaCita.getId() + "\n" +
+                                   "- Fecha y Hora: " + nuevaCita.getFechaHora() + "\n" +
+                                   "- ID de Paciente: " + nuevaCita.getPacienteId() + "\n\n" +
+                                   "¡Gracias por usar MediSync!";
+            
+            correoService.enviarCorreo(
+                "death888alucard@gmail.com", 
+                "Confirmación de Cita Médica - MediSync", 
+                cuerpoMensaje
+            );
+        } catch (Exception e) {
+            System.err.println("Advertencia: No se pudo enviar el correo de confirmación: " + e.getMessage());
         }
-        
-        // 3. Si está libre, le asignamos el estado y guardamos
-        cita.setEstado("ACTIVA");
-        return citaRepository.save(cita);
+
+        return nuevaCita;
     }
 
     // Consultar todas las citas registradas
@@ -46,18 +53,15 @@ public class CitaService {
         return citaRepository.findById(id);
     }
 
-    // Cancelar una cita existente (NUEVO MÉTODO)
+    // Método corregido: devuelve la Cita eliminada para cumplir con el controlador
     public Cita cancelarCita(String id) {
         Optional<Cita> citaOpt = citaRepository.findById(id);
-        
-        // Si la cita existe en la base de datos...
         if (citaOpt.isPresent()) {
-            Cita cita = citaOpt.get(); // La extraemos del Optional
-            cita.setEstado("CANCELADA"); // Cambiamos su estado
-            return citaRepository.save(cita); // Guardamos los cambios
+            Cita cita = citaOpt.get();
+            citaRepository.deleteById(id);
+            return cita;
+        } else {
+            throw new RuntimeException("Cita no encontrada con el ID: " + id);
         }
-        
-        // Si el Optional está vacío (no se encontró el ID), lanzamos el error
-        throw new RuntimeException("Cita no encontrada con el ID proporcionado.");
     }
 }

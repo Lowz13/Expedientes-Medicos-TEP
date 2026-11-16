@@ -40,7 +40,7 @@ public class CitaController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // PATCH: Cancelar una cita por ID (NUEVO MÉTODO)
+    // PATCH: Cancelar una cita por ID
     @PatchMapping("/{id}/cancelar")
     public ResponseEntity<Cita> cancelarCita(@PathVariable String id) {
         try {
