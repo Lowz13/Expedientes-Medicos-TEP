@@ -1,6 +1,7 @@
 package mx.unam.aragon.tsp.medisync.services;
 
 import mx.unam.aragon.tsp.medisync.models.Cita;
+import mx.unam.aragon.tsp.medisync.models.EstadoCita;
 import mx.unam.aragon.tsp.medisync.repositories.CitaRepository;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +33,7 @@ public class CitaService {
         }
         
         // 3. Si está libre, le asignamos el estado y guardamos
-        cita.setEstado("ACTIVA");
+        cita.setEstado(EstadoCita.PROGRAMADA);
         return citaRepository.save(cita);
     }
 
@@ -53,7 +54,7 @@ public class CitaService {
         // Si la cita existe en la base de datos...
         if (citaOpt.isPresent()) {
             Cita cita = citaOpt.get(); // La extraemos del Optional
-            cita.setEstado("CANCELADA"); // Cambiamos su estado
+            cita.setEstado(EstadoCita.CANCELADA); // Cambiamos su estado
             return citaRepository.save(cita); // Guardamos los cambios
         }
         

@@ -12,18 +12,21 @@ public class Cita {
     
     private String pacienteId; 
     private String medicoId;   
-    private LocalDateTime fechaHora; 
+    private LocalDateTime fechaHora;
+    private String motivo; // Motivo de la cita, opcional
     
     // Variable agregada aquí arriba, con las demás
-    private String estado = "ACTIVA"; 
+    private EstadoCita estado = EstadoCita.PROGRAMADA; // Estado de la cita: PROGRAMADA, CANCELADA, ATENDIDA
 
     // Constructores
     public Cita() {}
 
-    public Cita(String pacienteId, String medicoId, LocalDateTime fechaHora) {
+    public Cita(String pacienteId, String medicoId, LocalDateTime fechaHora, String motivo, EstadoCita estado) {
         this.pacienteId = pacienteId;
         this.medicoId = medicoId;
         this.fechaHora = fechaHora;
+        this.motivo = motivo;
+        this.estado = EstadoCita.PROGRAMADA;
     }
 
     // Getters y Setters
@@ -39,8 +42,10 @@ public class Cita {
     public LocalDateTime getFechaHora() { return fechaHora; }
     public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
 
-    // Getters y Setters del estado aquí abajo
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public String getMotivo() { return motivo;}
+    public void setMotivo(String motivo) { this.motivo = motivo; }
+    
+    public EstadoCita getEstado() { return estado; }
+    public void setEstado(EstadoCita estado) { this.estado = estado; }
     
 }
