@@ -10,6 +10,8 @@ public class Paciente {
     @Id
     private String id;
     private String nombre;
+    private String apellidoPaterno;
+    private String apellidoMaterno;
     private LocalDate fechaNacimiento;
     private String correo;
     private String telefono;
@@ -17,8 +19,19 @@ public class Paciente {
     private String alergias;
     private boolean activo = true;
 
-    public Paciente() {}
-
+    
+    public Paciente(String id, String nombre, String apellidoPaterno, String apellidoMaterno, LocalDate fechaNacimiento,
+            String correo, String telefono, String antecedentes, String alergias) {
+        this.id = id;
+        this.nombre = nombre;
+        this.apellidoPaterno = apellidoPaterno;
+        this.apellidoMaterno = apellidoMaterno;
+        this.fechaNacimiento = fechaNacimiento;
+        this.correo = correo;
+        this.telefono = telefono;
+        this.antecedentes = antecedentes;
+        this.alergias = alergias;
+    }
     // Getters y Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -26,6 +39,12 @@ public class Paciente {
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
 
+    public String getApellidoPaterno() {return apellidoPaterno;}
+    public void setApellidoPaterno(String apellidoPaterno) {this.apellidoPaterno = apellidoPaterno;}
+    
+    public String getApellidoMaterno() {return apellidoMaterno;}
+    public void setApellidoMaterno(String apellidoMaterno) {this.apellidoMaterno = apellidoMaterno;}
+    
     public LocalDate getFechaNacimiento() { return fechaNacimiento; }
     public void setFechaNacimiento(LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
 

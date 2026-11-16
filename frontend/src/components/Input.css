@@ -1,0 +1,50 @@
+.medisync-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.medisync-input-label {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.medisync-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-app);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.medisync-input::placeholder {
+  color: var(--color-muted);
+}
+
+.medisync-input:focus {
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.medisync-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--color-background);
+}
+
+.medisync-input--error {
+  border-color: var(--color-error);
+}
+
+.medisync-input-error {
+  color: var(--color-error);
+  font-size: 12px;
+}
