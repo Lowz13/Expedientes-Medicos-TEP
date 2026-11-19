@@ -2,86 +2,110 @@ import { useState } from 'react'
 import Sidebar from '../../components/Sidebar'
 import Header from '../../components/Header'
 import Table from '../../components/Table'
+import CitaForm from '../../components/CitaForm'
 import '../../styles/layout.css'
 
-// Datos de prueba mientras el contrato de API (BB-01) no esté listo.
-const citasMock = [
-  { id: '1', fecha: '2026-11-14', hora: '09:00', paciente: 'Ana López',  medico: 'Dr. Martínez', estado: 'Confirmada' },
-  { id: '2', fecha: '2026-11-14', hora: '10:30', paciente: 'Carlos Pérez', medico: 'Dra. García',   estado: 'Pendiente'  },
-  { id: '3', fecha: '2026-11-15', hora: '11:00', paciente: 'María Solís', medico: 'Dr. Martínez', estado: 'Confirmada' },
-  { id: '4', fecha: '2026-11-15', hora: '12:30', paciente: 'Luis Ramírez', medico: 'Dra. García',  estado: 'Cancelada'  },
-]
-
-// Columnas de la tabla. La columna "acciones" usa el render() del componente Table
-// para mostrar botones SOLO en la vista de recepción (el médico no los verá).
-const columnas = [
-  { key: 'fecha',    label: 'Fecha'   },
-  { key: 'hora',     label: 'Hora'    },
-  { key: 'paciente', label: 'Paciente' },
-  { key: 'medico',   label: 'Médico'  },
-  { key: 'estado',   label: 'Estado'  },
-  {
-    key: 'acciones',
-    label: 'Acciones',
-    render: () => (
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button type="button">Reagendar</button>
-        <button type="button">Cancelar</button>
-      </div>
-    ),
-  },
+// Ahora las citas usan los nombres del contrato (pacienteId, medicoId, fechaHora)
+// Nota: para que la tabla se vea bonita, agregamos 'pacienteNombre' y 'medicoNombre' como datos extra de prueba.
+const citasIniciales = [
+  { id: '1', pacienteId: 'P-001', pacienteNombre: 'Ana López', medicoId: 'M-001', medicoNombre: 'Dr. Martínez', fechaHora: '2026-11-14T09:00', estado: 'Confirmada' },
+  { id: '2', pacienteId: 'P-002', pacienteNombre: 'Carlos Pérez', medicoId: 'M-002', medicoNombre: 'Dra. García', fechaHora: '2026-11-14T10:30', estado: 'Pendiente' },
 ]
 
 function Citas() {
-  const [fecha, setFecha]   = useState('')
-  const [medico, setMedico] = useState('')
+  const [citas, setCitas] = useState(citasIniciales)
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
 
-  // Filtrado simple por fecha y/o médico
-  const citasFiltradas = citasMock.filter((cita) => {
-    const cumpleFecha  = !fecha  || cita.fecha  === fecha
-    const cumpleMedico = !medico || cita.medico.toLowerCase().includes(medico.toLowerCase())
-    return cumpleFecha && cumpleMedico
-  })
+  // Función para registrar cita (viene desde CitaForm)
+  const handleGuardarCita = (nuevaCita) => {
+    // Validación de conflicto de horario: mismo médico, misma fechaHora
+    const hayConflicto = citas.some(
+      (cita) => cita.medicoId === nuevaCita.medicoId && cita.fechaHora === nuevaCita.fechaHora
+    )
+
+    if (hayConflicto) {
+      return false // Le avisa al formulario que hubo error
+    }
+
+    // Si no hay conflicto, agregamos la cita (con datos extra para simular la tabla)
+    const citaConId = {
+      ...nuevaCita,
+      id: Date.now().toString(),
+      pacienteNombre: `Paciente ${nuevaCita.pacienteId}`,
+      medicoNombre: `Médico ${nuevaCita.medicoId}`,
+      estado: 'Pendiente',
+    }
+
+    setCitas([...citas, citaConId])
+    setMostrarFormulario(false)
+    return true // Le avisa al formulario que todo salió bien
+  }
+
+  // Función para cancelar cita
+  const handleCancelarCita = (id) => {
+    const confirmar = window.confirm('¿Estás seguro de que deseas cancelar esta cita?')
+    if (confirmar) {
+      setCitas(citas.map((cita) => 
+        cita.id === id ? { ...cita, estado: 'Cancelada' } : cita
+      ))
+    }
+  }
+
+  // Configuración de la tabla
+  const columnas = [
+    { key: 'fechaHora', label: 'Fecha y Hora' },
+    { key: 'pacienteNombre', label: 'Paciente' },
+    { key: 'medicoNombre', label: 'Médico' },
+    { key: 'estado', label: 'Estado' },
+    {
+      key: 'acciones',
+      label: 'Acciones',
+      render: (_, cita) => (
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button type="button">Reagendar</button>
+          <button 
+            type="button" 
+            onClick={() => handleCancelarCita(cita.id)}
+            disabled={cita.estado === 'Cancelada'}
+            style={{ opacity: cita.estado === 'Cancelada' ? 0.5 : 1 }}
+          >
+            {cita.estado === 'Cancelada' ? 'Cancelada' : 'Cancelar'}
+          </button>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className="medisync-layout">
       <Sidebar role="RECEPCIONISTA" currentPath="/citas" />
 
       <div className="medisync-layout__content">
-        <Header
-          title="Citas"
-          userName="Usuario de prueba"
-          role="Recepcionista"
-        />
+        <Header title="Citas" userName="Usuario de prueba" role="Recepcionista" />
 
         <main className="medisync-layout__main">
-          <h2>Listado de citas</h2>
-
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-            <label>
-              Filtrar por fecha:{' '}
-              <input
-                type="date"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-              />
-            </label>
-
-            <label>
-              Filtrar por médico:{' '}
-              <input
-                type="text"
-                value={medico}
-                onChange={(e) => setMedico(e.target.value)}
-                placeholder="Ej. Dr. Martínez"
-              />
-            </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2>Listado de citas</h2>
+            <button 
+              onClick={() => setMostrarFormulario(!mostrarFormulario)}
+              style={{ padding: '0.5rem 1rem', backgroundColor: '#005f73', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              {mostrarFormulario ? 'Ocultar Formulario' : '+ Nueva Cita'}
+            </button>
           </div>
+
+          {/* Mostramos el formulario condicionalmente */}
+          {mostrarFormulario && (
+            <CitaForm 
+              onGuardar={handleGuardarCita} 
+              onCancelar={() => setMostrarFormulario(false)} 
+            />
+          )}
 
           <Table
             columns={columnas}
-            data={citasFiltradas}
-            emptyMessage="No hay citas para los filtros seleccionados"
+            data={citas}
+            emptyMessage="No hay citas registradas"
           />
         </main>
       </div>
