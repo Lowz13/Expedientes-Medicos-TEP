@@ -35,25 +35,21 @@ public class Usuario {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // Constructores vacíos y con parámetros
-    
-    // Getters y Setters (necesarios para que Spring Boot pueda leer y escribir los datos)
-    public String getId() { return id; }
-
-    public Usuario(String nombre, String correo, String passwordHash, Rol rol, boolean activo) {
+    public Usuario(String nombre,String username, String correo, String passwordHash, Rol rol, boolean activo) {
         this.nombre = nombre;
         this.correo = correo;
         this.passwordHash = passwordHash;
+        this.username = username;
         this.rol = rol;
         this.activo = activo;
     }
+    
+    // Getters y Setters (necesarios para que Spring Boot pueda leer y escribir los datos)
+    public void setId(String id) { this.id = id; } 
+    public String getId() { return id; }
 
-    public Usuario(String nombre, String username, String correo,
-                   String passwordHash, Rol rol, boolean activo) {
-        this(nombre, correo, passwordHash, rol, activo);
-        setUsername(username);
-    }
-
-    public void setId(String id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }

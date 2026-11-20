@@ -12,16 +12,9 @@ public interface UsuarioRepository extends MongoRepository<Usuario, String> {
 
     Optional<Usuario> findByCorreo(String correo);
     boolean existsByCorreo(String correo);
-
-    // Buscar por nombre de usuario
-    Optional<Usuario> findByUsername(String username);
-
-    // Comprobar si el nombre de usuario ya existe
     boolean existsByUsername(String username);
-
-    // Buscar por nombre de usuario o correo electrónico
     Optional<Usuario> findByUsernameOrCorreo(String username, String correo);
-
+    Optional<Usuario> findByUsername(String username);
     List<Usuario> findByRol(Rol rol);
     List<Usuario> findByActivoTrue();
 }
