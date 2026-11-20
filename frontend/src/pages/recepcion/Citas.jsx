@@ -1,91 +1,76 @@
 import { useState } from 'react'
-import Sidebar from '../../components/Sidebar'
-import Header from '../../components/Header'
 import Table from '../../components/Table'
-import '../../styles/layout.css'
+import Input from '../../components/Input'
+import Button from '../../components/Button'
 
-// Datos de prueba mientras el contrato de API (BB-01) no esté listo.
+// Datos mock con los estados exactos del backend (Punto 5)
 const citasMock = [
-  { id: '1', fecha: '2026-11-14', hora: '09:00', paciente: 'Ana López',  medico: 'Dr. Martínez', estado: 'Confirmada' },
-  { id: '2', fecha: '2026-11-14', hora: '10:30', paciente: 'Carlos Pérez', medico: 'Dra. García',   estado: 'Pendiente'  },
-  { id: '3', fecha: '2026-11-15', hora: '11:00', paciente: 'María Solís', medico: 'Dr. Martínez', estado: 'Confirmada' },
-  { id: '4', fecha: '2026-11-15', hora: '12:30', paciente: 'Luis Ramírez', medico: 'Dra. García',  estado: 'Cancelada'  },
-]
-
-// Columnas de la tabla. La columna "acciones" usa el render() del componente Table
-// para mostrar botones SOLO en la vista de recepción (el médico no los verá).
-const columnas = [
-  { key: 'fecha',    label: 'Fecha'   },
-  { key: 'hora',     label: 'Hora'    },
-  { key: 'paciente', label: 'Paciente' },
-  { key: 'medico',   label: 'Médico'  },
-  { key: 'estado',   label: 'Estado'  },
-  {
-    key: 'acciones',
-    label: 'Acciones',
-    render: () => (
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button type="button">Reagendar</button>
-        <button type="button">Cancelar</button>
-      </div>
-    ),
-  },
+  { id: '1', pacienteId: 'P-001', pacienteNombre: 'Ana López', medicoId: 'M-001', medicoNombre: 'Dr. Martínez', fechaHora: '2026-11-14T09:00', estado: 'PROGRAMADA' },
+  { id: '2', pacienteId: 'P-002', pacienteNombre: 'Carlos Pérez', medicoId: 'M-002', medicoNombre: 'Dra. García', fechaHora: '2026-11-14T10:30', estado: 'PROGRAMADA' },
+  { id: '3', pacienteId: 'P-003', pacienteNombre: 'María Solís', medicoId: 'M-001', medicoNombre: 'Dr. Martínez', fechaHora: '2026-11-15T11:00', estado: 'CANCELADA' },
 ]
 
 function Citas() {
-  const [fecha, setFecha]   = useState('')
+  const [fecha, setFecha] = useState('')
   const [medico, setMedico] = useState('')
 
-  // Filtrado simple por fecha y/o médico
+  // Filtros aplicados sobre el estado (Punto 4)
   const citasFiltradas = citasMock.filter((cita) => {
-    const cumpleFecha  = !fecha  || cita.fecha  === fecha
-    const cumpleMedico = !medico || cita.medico.toLowerCase().includes(medico.toLowerCase())
+    const cumpleFecha = !fecha || cita.fechaHora.startsWith(fecha)
+    const cumpleMedico = !medico || cita.medicoNombre.toLowerCase().includes(medico.toLowerCase())
     return cumpleFecha && cumpleMedico
   })
 
+  const columnas = [
+    { key: 'fechaHora', label: 'Fecha y Hora' },
+    { key: 'pacienteNombre', label: 'Paciente' },
+    { key: 'medicoNombre', label: 'Médico' },
+    { 
+      key: 'estado', 
+      label: 'Estado',
+      // Mostramos el estado con la primera letra mayúscula (Punto 5)
+      render: (estado) => estado.charAt(0) + estado.slice(1).toLowerCase()
+    },
+    {
+      key: 'acciones',
+      label: 'Acciones',
+      render: (_, cita) => (
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {/* El botón Cancelar se implementa en FB-02, aquí solo mostramos el placeholder si está programada */}
+          {cita.estado === 'PROGRAMADA' && (
+            <Button variant="secondary">Cancelar</Button>
+          )}
+        </div>
+      ),
+    },
+  ]
+
   return (
-    <div className="medisync-layout">
-      <Sidebar role="RECEPCIONISTA" currentPath="/citas" />
-
-      <div className="medisync-layout__content">
-        <Header
-          title="Citas"
-          userName="Usuario de prueba"
-          role="Recepcionista"
+    <>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <Input
+          id="filtroFecha"
+          label="Filtrar por fecha"
+          type="date"
+          value={fecha}
+          onChange={(e) => setFecha(e.target.value)}
         />
-
-        <main className="medisync-layout__main">
-          <h2>Listado de citas</h2>
-
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-            <label>
-              Filtrar por fecha:{' '}
-              <input
-                type="date"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-              />
-            </label>
-
-            <label>
-              Filtrar por médico:{' '}
-              <input
-                type="text"
-                value={medico}
-                onChange={(e) => setMedico(e.target.value)}
-                placeholder="Ej. Dr. Martínez"
-              />
-            </label>
-          </div>
-
-          <Table
-            columns={columnas}
-            data={citasFiltradas}
-            emptyMessage="No hay citas para los filtros seleccionados"
-          />
-        </main>
+        <Input
+          id="filtroMedico"
+          label="Filtrar por médico"
+          type="text"
+          placeholder="Ej. Dr. Martínez"
+          value={medico}
+          onChange={(e) => setMedico(e.target.value)}
+        />
       </div>
-    </div>
+
+      <Table
+        columns={columnas}
+        data={citasFiltradas}
+        emptyMessage="No hay citas para los filtros seleccionados"
+      />
+    </>
   )
 }
 
