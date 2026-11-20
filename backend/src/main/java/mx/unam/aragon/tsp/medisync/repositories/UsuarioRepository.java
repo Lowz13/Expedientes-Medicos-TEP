@@ -7,9 +7,9 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import mx.unam.aragon.tsp.medisync.models.Rol;
 import mx.unam.aragon.tsp.medisync.models.Usuario;
 
-@Repository 
+@Repository
 public interface UsuarioRepository extends MongoRepository<Usuario, String> {
-    // Método personalizado para buscar usuarios por su correo único
+
     Optional<Usuario> findByCorreo(String correo);
     boolean existsByCorreo(String correo);
     boolean existsByUsername(String username);
