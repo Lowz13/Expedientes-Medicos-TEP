@@ -1,0 +1,80 @@
+.medisync-login {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  min-height: 100vh;
+  background-color: var(--color-surface);
+}
+
+.medisync-login__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  text-align: center;
+}
+
+.medisync-login__brand h1 {
+  margin: 0;
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.medisync-login__brand p {
+  margin-top: 12px;
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.medisync-login__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+
+.medisync-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.medisync-login__form h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 28px;
+}
+
+.medisync-login__form p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .medisync-login {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .medisync-login__brand {
+    padding: 32px 24px;
+  }
+
+  .medisync-login__brand h1 {
+    font-size: 32px;
+  }
+
+  .medisync-login__brand p {
+    font-size: 14px;
+  }
+
+  .medisync-login__content {
+    padding: 32px 24px;
+  }
+}
