@@ -5,6 +5,10 @@ import NotFound from '../pages/NotFound'
 import Login from '../pages/Login'
 import PendingPage from '../pages/PendingPage'
 
+// 1. Importamos nuestras pantallas reales
+import Citas from '../pages/recepcion/Citas'
+import Agenda from '../pages/medico/Agenda'
+
 function AppRoutes() {
   return (
     <Routes>
@@ -23,15 +27,9 @@ function AppRoutes() {
           element={<PendingPage title="Médicos" />}
         />
 
-        <Route
-          path="citas"
-          element={<PendingPage title="Citas" />}
-        />
-
-        <Route
-          path="agenda"
-          element={<PendingPage title="Agenda médica" />}
-        />
+        {/* 2. Reemplazamos PendingPage por nuestros componentes */}
+        <Route path="citas" element={<Citas />} />
+        <Route path="agenda" element={<Agenda />} />
 
         <Route
           path="historial"
