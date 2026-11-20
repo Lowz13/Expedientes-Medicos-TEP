@@ -1,7 +1,13 @@
 package mx.unam.aragon.tsp.medisync.dtos;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Email;
+
 public class PacienteDto {
+    @NotNull(message = "El ID es obligatorio")
     private String id;
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
     private String historialMedico; // Resumen simple/expediente
 
