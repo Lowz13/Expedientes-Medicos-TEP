@@ -9,7 +9,20 @@ import mx.unam.aragon.tsp.medisync.models.Paciente;
 @Repository 
 public interface PacienteRepository extends MongoRepository<Paciente, String> {
     // Hereda métodos como save(), findAll(), findById(), deleteById(), etc.
-    Optional<Paciente> findByCorreo(String correo);
-    boolean existsByCorreo(String correo);
-    List<Paciente> findByNombreContainingIgnoreCaseOrApellidoPaternoContainingIgnoreCaseOrApellidoMaternoContainingIgnoreCase(String nombre, String apellidoPaterno, String apellidoMaterno);
+    Optional<Paciente> findByIdAndActivoTrue(String id);
+
+    List<Paciente> findByActivoTrue();
+
+    Optional<Paciente> findByCorreoAndActivoTrue(String email);
+
+    boolean existsByCorreoAndActivoTrue(String email);
+
+    List<Paciente> findByActivoTrueAndNombreContainingIgnoreCaseOrActivoTrueAndApellidoPaternoContainingIgnoreCaseAndActivoTrueAndApellidoMaternoContainingIgnoreCase(
+            String nombre, String apellidoPaterno, String apellidoMaterno);
+    
+    
+
+  
+    
+  
 }
