@@ -19,9 +19,9 @@ public class PacienteService {
     }
 
     public PacienteResponseDTO crearPaciente(PacienteRequestDTO dto){
-        if (dto.getNombre() != null &&
-            !dto.getCorreo().isBlank() &&
-            pacienteRepository.existsByCorreoAndActivoTrue(dto.getCorreo().trim())) {
+        String correoNormalizado = dto.getCorreo() == null ? null : dto.getCorreo().trim();
+        if (correoNormalizado != null && !correoNormalizado.isBlank() &&
+            pacienteRepository.existsByCorreoAndActivoTrue(correoNormalizado)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo electrónico ya está registrado");
             }
         Paciente paciente = new Paciente();
