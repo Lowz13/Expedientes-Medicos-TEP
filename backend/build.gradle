@@ -82,15 +82,35 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	// --- Dependencias para pruebas ---
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation 'org.mockito:mockito-core'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
 
-	// Utilidades de test para Thymeleaf (renderizado de vistas en pruebas).
+	// Utilidades de test para Thymeleaf y Web MVC
 	testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
-
-	// Utilidades de test para Spring Web MVC (MockMvc, etc.).
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 
-	// Lanzador de JUnit Platform, necesario para ejecutar las pruebas con JUnit 5.
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	testImplementation 'org.mockito:mockito-core:5.14.2'
+
+
+	// Spring Boot Starter Validation: para validar datos de entrada en la aplicación.
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+   implementation 'org.springframework.security:spring-security-crypto'
+
+	
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+}
+
+test {
+	useJUnitPlatform()
 }
 
 // ============================================================================
@@ -101,3 +121,4 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
