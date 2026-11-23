@@ -34,6 +34,10 @@ public class Usuario {
     private boolean activo = true;
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    public Usuario() {
+        // Constructor vacío necesario para que Spring Boot pueda instanciar la clase
+    }
+
     // Constructores vacíos y con parámetros
     public Usuario(String nombre,String username, String correo, String passwordHash, Rol rol, boolean activo) {
         this.nombre = nombre;
