@@ -19,6 +19,8 @@ public class Paciente {
     private String alergias;
     private boolean activo = true;
 
+    public Paciente() {
+    }
     
     public Paciente(String id, String nombre, String apellidoPaterno, String apellidoMaterno, LocalDate fechaNacimiento,
             String correo, String telefono, String antecedentes, String alergias) {

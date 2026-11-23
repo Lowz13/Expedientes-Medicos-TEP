@@ -37,9 +37,9 @@ public class Usuario {
     // Constructores vacíos y con parámetros
     public Usuario(String nombre,String username, String correo, String passwordHash, Rol rol, boolean activo) {
         this.nombre = nombre;
-        this.correo = correo;
+        setCorreo(correo);
         this.passwordHash = passwordHash;
-        this.username = username;
+        setUsername(username);
         this.rol = rol;
         this.activo = activo;
     }
@@ -60,7 +60,11 @@ public class Usuario {
     }
 
     public String getCorreo() { return correo; }
-    public void setCorreo(String correo) { this.correo = correo; }
+    public void setCorreo(String correo) {
+        this.correo = correo == null
+            ? null
+            : correo.toLowerCase(Locale.ROOT);
+    }
 
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
