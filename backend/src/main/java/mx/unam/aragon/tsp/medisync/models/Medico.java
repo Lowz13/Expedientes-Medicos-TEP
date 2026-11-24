@@ -23,7 +23,9 @@ public class Medico {
     private List<String> horarios; // Franjas u horarios disponibles
     private boolean activo = true;
 
-
+    public Medico() {
+        // Constructor vacío necesario para que Spring Boot pueda instanciar la clase
+    }
     
 
     public Medico(String usuarioId, String nombre, String apellidoPaterno, String apellidoMaterno, String telefono,

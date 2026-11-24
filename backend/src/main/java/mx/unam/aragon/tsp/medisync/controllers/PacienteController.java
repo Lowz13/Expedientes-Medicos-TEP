@@ -15,7 +15,7 @@ import mx.unam.aragon.tsp.medisync.services.PacienteService;
 @RestController
 @RequestMapping("/api/pacientes")
 public class PacienteController {
-private final PacienteService pacienteService;
+    private final PacienteService pacienteService;
 
     public PacienteController(PacienteService pacienteService) {
         this.pacienteService = pacienteService;
