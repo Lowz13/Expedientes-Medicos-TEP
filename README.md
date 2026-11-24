@@ -162,13 +162,24 @@ cd Expedientes-Medicos-TEP/backend
 ./gradlew clean compileJava
 ```
 
-Para intentar arrancar la aplicación durante el desarrollo:
+
+
 
 ```bash
 ./gradlew bootRun
 ```
 
 `bootRun` **no está verificado** en este documento y puede requerir que MongoDB esté disponible. En Windows, usar `gradlew.bat`.
+
+Para arrancar la aplicación durante el desarrollo:
+1. Abrir una nueva terminal.
+2. Tener la app de docker instalada y abierta para windows y descargar docker y docker compose desde la terminal para linux. 
+```bash
+docker compose up -d
+```
+3. Ya que se termina de descargar la imagen de docker usar el springboot dashboard para iniciar el proyecto.
+4. Al iniciar el proyecto te dara un usuario admin, cual es le estado de la base de datos.
+5. Para probar el uso de las api usar el postamn con la pestaña de authorization y agregar el usuario y contraseña de administrador.
 
 **Frontend:** se inicializará dentro de `frontend/` con React/Vite; los comandos definitivos de ejecución se documentarán cuando exista `package.json`.
 
