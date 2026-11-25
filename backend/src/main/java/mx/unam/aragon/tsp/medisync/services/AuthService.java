@@ -1,67 +1,66 @@
 package mx.unam.aragon.tsp.medisync.services;
 
-import lombok.RequiredArgsConstructor;
-import mx.unam.aragon.tsp.medisync.dtos.AuthResponseDto;
-import mx.unam.aragon.tsp.medisync.dtos.LoginDto;
-import mx.unam.aragon.tsp.medisync.dtos.RegistroDto;
-import mx.unam.aragon.tsp.medisync.models.Usuario;
-import mx.unam.aragon.tsp.medisync.repositories.UsuarioRepository;
+import java.util.Locale;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import mx.unam.aragon.tsp.medisync.dtos.LoginRequestDTO;
+import mx.unam.aragon.tsp.medisync.dtos.LoginResponseDto;
+import mx.unam.aragon.tsp.medisync.models.Medico;
+import mx.unam.aragon.tsp.medisync.models.Rol;
+import mx.unam.aragon.tsp.medisync.models.Usuario;
+import mx.unam.aragon.tsp.medisync.repositories.MedicoRepository;
+import mx.unam.aragon.tsp.medisync.repositories.UsuarioRepository;
+import mx.unam.aragon.tsp.medisync.security.JwtUtil;
 
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
+    private final MedicoRepository medicoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public Usuario registrar(RegistroDto dto) {
-        String usernameNorm = dto.getUsername().trim().toLowerCase();
-        String correoNorm = dto.getCorreo().trim().toLowerCase();
-
-        if (usuarioRepository.existsByUsername(usernameNorm)) {
-            throw new IllegalArgumentException("El username '" + usernameNorm + "' ya está registrado.");
-        }
-        if (usuarioRepository.existsByCorreo(correoNorm)) {
-            throw new IllegalArgumentException("El correo '" + correoNorm + "' ya está registrado.");
-        }
-
-        String passwordHash = passwordEncoder.encode(dto.getPassword());
-
-        Usuario nuevoUsuario = new Usuario(
-                dto.getNombre().trim(),
-                usernameNorm,
-                correoNorm,
-                passwordHash,
-                dto.getRol(),
-                true
-        );
-
-        return usuarioRepository.save(nuevoUsuario);
+    public AuthService(UsuarioRepository usuarioRepository,
+                       MedicoRepository medicoRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtUtil jwtUtil) {
+        this.usuarioRepository = usuarioRepository;
+        this.medicoRepository = medicoRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
-    public AuthResponseDto login(LoginDto dto) {
-        String idNorm = dto.getIdentificador().trim().toLowerCase();
+    public LoginResponseDto login(LoginRequestDTO dto) {
+        String idLimpio = dto.getIdentificador().trim().toLowerCase(Locale.ROOT);
 
-        Usuario usuario = usuarioRepository.findByUsernameOrCorreo(idNorm, idNorm)
-                .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
-
-        if (!passwordEncoder.matches(dto.getPassword(), usuario.getPasswordHash())) {
-            throw new IllegalArgumentException("Credenciales inválidas");
-        }
+        Usuario usuario = usuarioRepository.findByUsernameOrCorreo(idLimpio, idLimpio)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas"));
 
         if (!usuario.isActivo()) {
-            throw new IllegalStateException("La cuenta está desactivada.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "La cuenta de usuario se encuentra desactivada");
         }
 
-        // Token temporal hasta conectar el módulo de security
-        String tokenTemporal = "TOKEN_PENDIENTE_" + usuario.getId();
+        if (!passwordEncoder.matches(dto.getPassword(), usuario.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales inválidas");
+        }
 
-        return new AuthResponseDto(
-                tokenTemporal,
-                "Bearer",
+        String medicoId = null;
+        if (usuario.getRol() == Rol.MEDICO) {
+            medicoId = medicoRepository.findByUsuarioId(usuario.getId())
+                    .map(Medico::getId)
+                    .orElse(null);
+        }
+
+        String token = jwtUtil.generarToken(usuario);
+
+        return new LoginResponseDto(
+                token,
                 usuario.getId(),
+                medicoId,
                 usuario.getNombre(),
                 usuario.getUsername(),
                 usuario.getCorreo(),

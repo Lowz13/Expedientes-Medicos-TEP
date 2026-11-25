@@ -1,37 +1,33 @@
 package mx.unam.aragon.tsp.medisync.controllers;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import mx.unam.aragon.tsp.medisync.dtos.AuthResponseDto;
-import mx.unam.aragon.tsp.medisync.dtos.LoginDto;
-import mx.unam.aragon.tsp.medisync.dtos.RegistroDto;
-import mx.unam.aragon.tsp.medisync.models.Usuario;
-import mx.unam.aragon.tsp.medisync.services.AuthService;
-import org.springframework.http.HttpStatus;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import jakarta.validation.Valid;
+import mx.unam.aragon.tsp.medisync.dtos.LoginRequestDTO;
+import mx.unam.aragon.tsp.medisync.dtos.LoginResponseDto;
+import mx.unam.aragon.tsp.medisync.services.AuthService;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/registro")
-    public ResponseEntity<?> registrar(@Valid @RequestBody RegistroDto dto) {
-        Usuario creado = authService.registrar(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "mensaje", "Usuario registrado correctamente",
-                "id", creado.getId(),
-                "username", creado.getUsername()
-        ));
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginDto dto) {
-        return ResponseEntity.ok(authService.login(dto));
+    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDTO request) {
+        return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout() {
+        // Al usar JWT stateless, el cliente descarta el token; este endpoint confirma el cierre en el flujo
+        return ResponseEntity.ok(Map.of("mensaje", "Sesión cerrada correctamente"));
     }
 }

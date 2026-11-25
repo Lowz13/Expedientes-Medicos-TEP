@@ -1,12 +1,16 @@
 package mx.unam.aragon.tsp.medisync;
 
-import mx.unam.aragon.tsp.medisync.services.AuthService;
-import mx.unam.aragon.tsp.medisync.dtos.AuthResponseDto;
-import mx.unam.aragon.tsp.medisync.dtos.LoginDto;
-import mx.unam.aragon.tsp.medisync.dtos.RegistroDto;
+import java.util.Optional;
+
+import mx.unam.aragon.tsp.medisync.dtos.LoginRequestDTO;
+import mx.unam.aragon.tsp.medisync.dtos.LoginResponseDto;
+import mx.unam.aragon.tsp.medisync.models.Medico;
 import mx.unam.aragon.tsp.medisync.models.Rol;
 import mx.unam.aragon.tsp.medisync.models.Usuario;
+import mx.unam.aragon.tsp.medisync.repositories.MedicoRepository;
 import mx.unam.aragon.tsp.medisync.repositories.UsuarioRepository;
+import mx.unam.aragon.tsp.medisync.security.JwtUtil;
+import mx.unam.aragon.tsp.medisync.services.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,14 +19,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -30,134 +37,138 @@ class AuthServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private MedicoRepository medicoRepository;
+
+    @Mock
+    private JwtUtil jwtUtil;
+
     @Spy
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @InjectMocks
     private AuthService authService;
 
-    private RegistroDto registroValido;
+    private Usuario usuario;
 
     @BeforeEach
     void setUp() {
-        registroValido = new RegistroDto();
-        registroValido.setNombre("Dr. Carlos Mendoza");
-        registroValido.setUsername("Medico_01"); // Con mayúsculas para probar normalización
-        registroValido.setCorreo("Carlos.Mendoza@Clinica.com");
-        registroValido.setPassword("Password123!");
-        registroValido.setRol(Rol.MEDICO);
+        usuario = new Usuario(
+                "Dr. Carlos Mendoza",
+                "medico_01",
+                "carlos.mendoza@clinica.com",
+                passwordEncoder.encode("Password123!"),
+                Rol.MEDICO,
+                true
+        );
+        usuario.setId("usuario-123");
     }
 
     @Test
-    @DisplayName("Debe registrar un usuario normalizando username y correo a minúsculas")
-    void registrarUsuarioExitoso() {
-        when(usuarioRepository.existsByUsername("medico_01")).thenReturn(false);
-        when(usuarioRepository.existsByCorreo("carlos.mendoza@clinica.com")).thenReturn(false);
-        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Usuario resultado = authService.registrar(registroValido);
-
-        assertNotNull(resultado);
-        assertEquals("medico_01", resultado.getUsername());
-        assertEquals("carlos.mendoza@clinica.com", resultado.getCorreo());
-        assertTrue(passwordEncoder.matches("Password123!", resultado.getPasswordHash()));
-        assertTrue(resultado.isActivo());
-        verify(usuarioRepository).save(any(Usuario.class));
-    }
-
-    @Test
-    @DisplayName("Debe rechazar registro si el username ya existe")
-    void registrarUsernameDuplicado() {
-        when(usuarioRepository.existsByUsername("medico_01")).thenReturn(true);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> authService.registrar(registroValido));
-
-        assertTrue(ex.getMessage().contains("username"));
-        verify(usuarioRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Debe rechazar registro si el correo ya existe")
-    void registrarCorreoDuplicado() {
-        when(usuarioRepository.existsByUsername("medico_01")).thenReturn(false);
-        when(usuarioRepository.existsByCorreo("carlos.mendoza@clinica.com")).thenReturn(true);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> authService.registrar(registroValido));
-
-        assertTrue(ex.getMessage().contains("correo"));
-        verify(usuarioRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Debe permitir iniciar sesión usando username en mayúsculas/minúsculas")
+    @DisplayName("Debe iniciar sesión normalizando un username con mayúsculas y espacios")
     void loginConUsernameExitoso() {
-        String hash = passwordEncoder.encode("Password123!");
-        Usuario mockUsuario = new Usuario("Dr. Carlos Mendoza", "medico_01", "carlos@clinica.com", hash, Rol.MEDICO, true);
-
         when(usuarioRepository.findByUsernameOrCorreo("medico_01", "medico_01"))
-                .thenReturn(Optional.of(mockUsuario));
+                .thenReturn(Optional.of(usuario));
+        when(medicoRepository.findByUsuarioId("usuario-123"))
+                .thenReturn(Optional.empty());
+        when(jwtUtil.generarToken(usuario)).thenReturn("jwt-de-prueba");
 
-        LoginDto loginDto = new LoginDto();
-        loginDto.setIdentificador("MEDICO_01");
-        loginDto.setPassword("Password123!");
+        LoginResponseDto response = authService.login(login(" MEDICO_01 ", "Password123!"));
 
-        AuthResponseDto response = authService.login(loginDto);
-
-        assertNotNull(response);
+        assertEquals("jwt-de-prueba", response.getToken());
+        assertEquals("Bearer", response.getTipo());
+        assertEquals("usuario-123", response.getUsuarioId());
+        assertEquals("Dr. Carlos Mendoza", response.getNombre());
         assertEquals("medico_01", response.getUsername());
+        assertEquals("carlos.mendoza@clinica.com", response.getCorreo());
         assertEquals(Rol.MEDICO, response.getRol());
+        assertNull(response.getMedicoId());
     }
 
     @Test
     @DisplayName("Debe permitir iniciar sesión usando correo electrónico")
     void loginConCorreoExitoso() {
-        String hash = passwordEncoder.encode("Password123!");
-        Usuario mockUsuario = new Usuario("Dr. Carlos Mendoza", "medico_01", "carlos@clinica.com", hash, Rol.MEDICO, true);
+        when(usuarioRepository.findByUsernameOrCorreo(
+                "carlos.mendoza@clinica.com",
+                "carlos.mendoza@clinica.com"))
+                .thenReturn(Optional.of(usuario));
+        when(medicoRepository.findByUsuarioId("usuario-123"))
+                .thenReturn(Optional.empty());
+        when(jwtUtil.generarToken(usuario)).thenReturn("jwt-de-prueba");
 
-        when(usuarioRepository.findByUsernameOrCorreo("carlos@clinica.com", "carlos@clinica.com"))
-                .thenReturn(Optional.of(mockUsuario));
+        LoginResponseDto response = authService.login(
+                login("Carlos.Mendoza@Clinica.com", "Password123!"));
 
-        LoginDto loginDto = new LoginDto();
-        loginDto.setIdentificador("Carlos@Clinica.com");
-        loginDto.setPassword("Password123!");
-
-        AuthResponseDto response = authService.login(loginDto);
-
-        assertNotNull(response);
-        assertEquals("carlos@clinica.com", response.getCorreo());
+        assertEquals("carlos.mendoza@clinica.com", response.getCorreo());
     }
 
     @Test
-    @DisplayName("Debe rechazar login si la contraseña no coincide")
+    @DisplayName("Debe incluir el identificador del médico en la respuesta")
+    void loginIncluyeMedicoId() {
+        Medico medico = new Medico();
+        medico.setId("medico-456");
+        when(usuarioRepository.findByUsernameOrCorreo("medico_01", "medico_01"))
+                .thenReturn(Optional.of(usuario));
+        when(medicoRepository.findByUsuarioId("usuario-123"))
+                .thenReturn(Optional.of(medico));
+        when(jwtUtil.generarToken(usuario)).thenReturn("jwt-de-prueba");
+
+        LoginResponseDto response = authService.login(login("medico_01", "Password123!"));
+
+        assertEquals("medico-456", response.getMedicoId());
+    }
+
+    @Test
+    @DisplayName("Debe rechazar el login si el usuario no existe")
+    void loginUsuarioInexistente() {
+        when(usuarioRepository.findByUsernameOrCorreo("desconocido", "desconocido"))
+                .thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> authService.login(login("desconocido", "Password123!"))
+        );
+
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        verify(jwtUtil, never()).generarToken(usuario);
+    }
+
+    @Test
+    @DisplayName("Debe rechazar el login si la contraseña no coincide")
     void loginPasswordIncorrecta() {
-        String hash = passwordEncoder.encode("Password123!");
-        Usuario mockUsuario = new Usuario("Dr. Carlos Mendoza", "medico_01", "carlos@clinica.com", hash, Rol.MEDICO, true);
-
         when(usuarioRepository.findByUsernameOrCorreo("medico_01", "medico_01"))
-                .thenReturn(Optional.of(mockUsuario));
+                .thenReturn(Optional.of(usuario));
 
-        LoginDto loginDto = new LoginDto();
-        loginDto.setIdentificador("medico_01");
-        loginDto.setPassword("ClaveEquivocada");
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> authService.login(login("medico_01", "ClaveEquivocada"))
+        );
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(loginDto));
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
+        verify(jwtUtil, never()).generarToken(usuario);
     }
 
     @Test
-    @DisplayName("Debe rechazar login si la cuenta está inactiva")
+    @DisplayName("Debe rechazar el login si la cuenta está inactiva")
     void loginCuentaInactiva() {
-        String hash = passwordEncoder.encode("Password123!");
-        Usuario mockUsuario = new Usuario("Dr. Carlos Mendoza", "medico_01", "carlos@clinica.com", hash, Rol.MEDICO, false);
-
+        usuario.setActivo(false);
         when(usuarioRepository.findByUsernameOrCorreo("medico_01", "medico_01"))
-                .thenReturn(Optional.of(mockUsuario));
+                .thenReturn(Optional.of(usuario));
 
-        LoginDto loginDto = new LoginDto();
-        loginDto.setIdentificador("medico_01");
-        loginDto.setPassword("Password123!");
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> authService.login(login("medico_01", "Password123!"))
+        );
 
-        assertThrows(IllegalStateException.class, () -> authService.login(loginDto));
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        verify(medicoRepository, never()).findByUsuarioId("usuario-123");
+        verify(jwtUtil, never()).generarToken(usuario);
+    }
+
+    private LoginRequestDTO login(String identificador, String password) {
+        LoginRequestDTO request = new LoginRequestDTO();
+        request.setIdentificador(identificador);
+        request.setPassword(password);
+        return request;
     }
 }
