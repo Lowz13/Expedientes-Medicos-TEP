@@ -1,8 +1,10 @@
 package mx.unam.aragon.tsp.medisync.dtos;
 
+import java.time.LocalDate;
 import java.util.List;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -15,6 +17,9 @@ public class MedicoRequestDTO {
     private String apellidoPaterno;
 
     private String apellidoMaterno;
+
+    @Past(message = "La fecha de nacimiento debe ser anterior a la fecha actual")
+    private LocalDate fechaNacimiento;
 
     @NotBlank(message = "El teléfono es obligatorio")
     private String telefono;
@@ -29,10 +34,7 @@ public class MedicoRequestDTO {
 
     @NotBlank(message = "El nombre de usuario es obligatorio")
     @Size(min = 4, max = 30, message = "El usuario debe tener entre 4 y 30 caracteres")
-    @Pattern(
-        regexp = "^[a-zA-Z0-9._]+$",
-        message = "El usuario solo puede contener letras, números, puntos y guiones bajos"
-    )
+    @Pattern(regexp = "^[a-zA-Z0-9._]+$", message = "El usuario solo puede contener letras, números, puntos y guiones bajos")
     private String username;
 
     @NotBlank(message = "El correo electrónico es obligatorio")
@@ -52,6 +54,9 @@ public class MedicoRequestDTO {
 
     public String getApellidoMaterno() { return apellidoMaterno; }
     public void setApellidoMaterno(String apellidoMaterno) { this.apellidoMaterno = apellidoMaterno; }
+
+    public LocalDate getFechaNacimiento() { return fechaNacimiento; }
+    public void setFechaNacimiento(LocalDate fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
 
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }

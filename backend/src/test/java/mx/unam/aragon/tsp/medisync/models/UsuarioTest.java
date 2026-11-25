@@ -27,14 +27,14 @@ class UsuarioTest {
     }
 
     private Usuario crearUsuario(String username) {
-        return new Usuario(
-            "Usuario de prueba",
-            username,
-            "prueba@example.com",
-            "hash_prueba",
-            Rol.RECEPCIONISTA,
-            true
-        );
+        Usuario usuario = new Usuario();
+        usuario.setNombre("Usuario de prueba");
+        usuario.setUsername(username);
+        usuario.setCorreo("prueba@example.com");
+        usuario.setPasswordHash("hash_prueba");
+        usuario.setRol(Rol.RECEPCIONISTA);
+        usuario.setActivo(true);
+        return usuario;
     }
 
     @Test

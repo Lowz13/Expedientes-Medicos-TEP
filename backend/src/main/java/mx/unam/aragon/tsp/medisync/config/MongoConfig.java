@@ -1,16 +1,18 @@
 package mx.unam.aragon.tsp.medisync.config;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Locale;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
-
-// Importaciones necesarias para la configuración de MongoDB y la creación del usuario administrador
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.beans.factory.annotation.Value;
+
 import mx.unam.aragon.tsp.medisync.models.Rol;
 import mx.unam.aragon.tsp.medisync.models.Usuario;
 import mx.unam.aragon.tsp.medisync.repositories.UsuarioRepository;
@@ -19,15 +21,20 @@ import mx.unam.aragon.tsp.medisync.repositories.UsuarioRepository;
 public class MongoConfig {
 
     private static final Logger log = LoggerFactory.getLogger(MongoConfig.class);
-    // Valores de configuración para el usuario administrador, con valores por defecto
-    @Value("${app.admin.username:administrador}")
+
+    @Value("${app.admin.username}")
     private String adminUsername;
 
-    @Value("${app.admin.password:1234}")
+    @Value("${app.admin.password}")
     private String adminPassword;
 
+    @Value("${app.recepcion.username}")
+    private String recepcionUsername;
+
+    @Value("${app.recepcion.password}")
+    private String recepcionPassword;
+
     @Bean
-    //metodo para iniciar un usuario administrador en la base de datos si no existe
     public CommandLineRunner init(
             MongoTemplate mongoTemplate,
             UsuarioRepository usuarioRepository,
@@ -38,26 +45,51 @@ public class MongoConfig {
                 log.info("====================================================");
                 log.info(">>> Conexión EXITOSA a Mongo DB");
                 log.info("Base de datos activa : {}", dbName);
-                // Verifica si el usuario administrador ya existe en la base de datos
-                if (usuarioRepository.findByUsername(adminUsername).isEmpty()) {
+
+                String adminUserLimpio = adminUsername.trim().toLowerCase(Locale.ROOT);
+                if (usuarioRepository.findByUsername(adminUserLimpio).isEmpty()) {
                     Usuario admin = new Usuario();
-                    admin.setNombre("admin");
-                    admin.setUsername(adminUsername);
+                    admin.setUsername(adminUserLimpio);
+                    admin.setNombre("Administrador");
+                    admin.setApellidoPaterno("General");
+                    admin.setApellidoMaterno("Sistema");
+                    admin.setFechaNacimiento(LocalDate.of(1990, 1, 1));
                     admin.setCorreo("admin@admin.com");
+                    admin.setTelefono("5500000000");
                     admin.setActivo(true);
                     admin.setPasswordHash(passwordEncoder.encode(adminPassword));
                     admin.setRol(Rol.ADMIN);
+                    admin.setCreatedAt(LocalDateTime.now());
 
                     usuarioRepository.save(admin);
-                    log.info(">>> Usuario administrador creado: {}", adminUsername);
-                    log.info(">>> Contraseña del administrador: {}", adminPassword);
+                    log.info(">>> Usuario administrador creado: {}", adminUserLimpio);
                 } else {
-                    log.info(">>> Usuario administrador '{}' ya existe.", adminUsername);
-                    log.info(">>> Contraseña del administrador: {}", adminPassword); 
+                    log.info(">>> Usuario administrador '{}' ya existe.", adminUserLimpio);
                 }
-                // Log de éxito de la conexión a MongoDB
+
+                String recepUserLimpio = recepcionUsername.trim().toLowerCase(Locale.ROOT);
+                if (usuarioRepository.findByUsername(recepUserLimpio).isEmpty()) {
+                    Usuario recepcionista = new Usuario();
+                    recepcionista.setUsername(recepUserLimpio);
+                    recepcionista.setNombre("Laura");
+                    recepcionista.setApellidoPaterno("Morales");
+                    recepcionista.setApellidoMaterno("García");
+                    recepcionista.setFechaNacimiento(LocalDate.of(1996, 4, 12));
+                    recepcionista.setCorreo("recepcion@medisync.local");
+                    recepcionista.setTelefono("5511223344");
+                    recepcionista.setActivo(true);
+                    recepcionista.setPasswordHash(passwordEncoder.encode(recepcionPassword));
+                    recepcionista.setRol(Rol.RECEPCIONISTA);
+                    recepcionista.setCreatedAt(LocalDateTime.now());
+
+                    usuarioRepository.save(recepcionista);
+                    log.info(">>> Usuario recepcionista creado: {}", recepUserLimpio);
+                } else {
+                    log.info(">>> Usuario recepcionista '{}' ya existe.", recepUserLimpio);
+                }
+
                 log.info("====================================================");
-                
+
             } catch (Exception e) {
                 log.error("====================================================");
                 log.error(">>> ERROR al inicializar Mongo DB");

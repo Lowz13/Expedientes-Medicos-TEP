@@ -1,5 +1,6 @@
 package mx.unam.aragon.tsp.medisync;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import mx.unam.aragon.tsp.medisync.dtos.LoginRequestDTO;
@@ -53,15 +54,18 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        usuario = new Usuario(
-                "Dr. Carlos Mendoza",
-                "medico_01",
-                "carlos.mendoza@clinica.com",
-                passwordEncoder.encode("Password123!"),
-                Rol.MEDICO,
-                true
-        );
+        usuario = new Usuario();
         usuario.setId("usuario-123");
+        usuario.setUsername("medico_01");
+        usuario.setNombre("Dr. Carlos Mendoza");
+        usuario.setApellidoPaterno("Mendoza");
+        usuario.setApellidoMaterno("López");
+        usuario.setFechaNacimiento(LocalDate.of(1980, 5, 15));
+        usuario.setCorreo("carlos.mendoza@clinica.com");
+        usuario.setPasswordHash(passwordEncoder.encode("Password123!"));
+        usuario.setTelefono("5551234567");
+        usuario.setRol(Rol.MEDICO);
+        usuario.setActivo(true);
     }
 
     @Test

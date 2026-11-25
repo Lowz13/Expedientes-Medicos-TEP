@@ -1,12 +1,13 @@
 package mx.unam.aragon.tsp.medisync.services;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,12 +24,14 @@ public class MedicoService {
 
     private final MedicoRepository medicoRepository;
     private final UsuarioRepository usuarioRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    public MedicoService(MedicoRepository medicoRepository, UsuarioRepository usuarioRepository) {
+    public MedicoService(MedicoRepository medicoRepository,
+                         UsuarioRepository usuarioRepository,
+                         PasswordEncoder passwordEncoder) {
         this.medicoRepository = medicoRepository;
         this.usuarioRepository = usuarioRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
     }
 
     public MedicoResponseDTO crearMedico(MedicoRequestDTO dto) {
@@ -53,16 +56,20 @@ public class MedicoService {
         }
 
         String apellidoMat = dto.getApellidoMaterno() != null ? dto.getApellidoMaterno().trim() : "";
-        String nombreCompleto = (dto.getNombre().trim() + " " + dto.getApellidoPaterno().trim() + " " + apellidoMat).trim();
 
-        Usuario usuario = new Usuario(
-                nombreCompleto,
-                usernameLimpio,
-                correoLimpio,
-                passwordEncoder.encode(dto.getPassword()),
-                Rol.MEDICO,
-                true
-        );
+        Usuario usuario = new Usuario();
+        usuario.setUsername(usernameLimpio);
+        usuario.setNombre(dto.getNombre().trim());
+        usuario.setApellidoPaterno(dto.getApellidoPaterno().trim());
+        usuario.setApellidoMaterno(apellidoMat.isEmpty() ? null : apellidoMat);
+        usuario.setFechaNacimiento(dto.getFechaNacimiento());
+        usuario.setCorreo(correoLimpio);
+        usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        usuario.setTelefono(dto.getTelefono().trim());
+        usuario.setRol(Rol.MEDICO);
+        usuario.setActivo(true);
+        usuario.setCreatedAt(LocalDateTime.now());
+
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
 
         Medico medico = new Medico();
@@ -137,11 +144,16 @@ public class MedicoService {
         });
 
         String apellidoMat = dto.getApellidoMaterno() != null ? dto.getApellidoMaterno().trim() : "";
-        String nombreCompleto = (dto.getNombre().trim() + " " + dto.getApellidoPaterno().trim() + " " + apellidoMat).trim();
 
-        usuario.setNombre(nombreCompleto);
         usuario.setUsername(usernameLimpio);
+        usuario.setNombre(dto.getNombre().trim());
+        usuario.setApellidoPaterno(dto.getApellidoPaterno().trim());
+        usuario.setApellidoMaterno(apellidoMat.isEmpty() ? null : apellidoMat);
+        if (dto.getFechaNacimiento() != null) {
+            usuario.setFechaNacimiento(dto.getFechaNacimiento());
+        }
         usuario.setCorreo(correoLimpio);
+        usuario.setTelefono(dto.getTelefono().trim());
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         }
